@@ -2,19 +2,32 @@
   <!--
     Merkezi paket sürüm yönetimi (Central Package Management).
     Paket sürümleri yalnız burada yazılır; .csproj dosyalarında PackageReference sürümsüzdür.
-    Tek ItemGroup kullanılır, çünkü "dotnet add package" yeni sürümü ilk ItemGroup'a ekler.
+    "dotnet add package" yeni sürümü ilk ItemGroup'a ekler; bu yüzden ana liste en üstte durur.
   -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <!--
+      Geçişli (transitive) bağımlılıklar da buradaki sürüme sabitlenir. Doğrudan eklemediğimiz
+      bir paketteki güvenlik açığı, onu getiren paketin yeni sürümünü beklemeden kapatılabilir.
+    -->
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.13" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.13" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.13" />
     <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.11.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="Testcontainers.MsSql" Version="4.16.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+  <ItemGroup Label="Güvenlik sabitlemeleri (geçişli bağımlılıklar)">
+    <!-- CVE-2026-84008 (yüksek) ve CVE-2026-70162 (orta), .NET DoS. 9.0.11 sürümü geçişli olarak geliyordu. -->
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
   </ItemGroup>
 </Project>

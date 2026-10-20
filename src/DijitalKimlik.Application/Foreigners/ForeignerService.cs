@@ -62,7 +62,16 @@ public sealed class ForeignerService(IForeignerRepository foreigners, IUnitOfWor
         }
 
         foreigners.Add(foreigner);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (UniqueConstraintException)
+        {
+            // Yarışı kaybeden istek: aynı numara bu arada başka bir istekle kaydedildi.
+            return ForeignerErrors.Duplicate;
+        }
+
         return foreigner.Id;
     }
 }

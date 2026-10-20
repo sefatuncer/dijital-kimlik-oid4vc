@@ -44,12 +44,30 @@ jobs:
       - name: Biçim denetimi
         run: dotnet format --verify-no-changes --no-restore
 
+      # Entegrasyon testleri Testcontainers ile gerçek bir SQL Server konteyneri açar (runner'da Docker var).
       - name: Test ve kod kapsamı
         run: >
           dotnet test --no-build -c Release
           --collect:"XPlat Code Coverage"
           --results-directory ./TestResults
           --logger "trx;LogFilePrefix=test"
+
+      - name: dotnet-ef aracını geri yükle
+        run: dotnet tool restore
+
+      # Üretimde migration'ı uygulama değil DBA çalıştırır: tekrar çalıştırılabilir (idempotent) betik.
+      - name: Veritabanı betiği üret (DBA için idempotent SQL)
+        run: >
+          dotnet ef migrations script --idempotent --no-build --configuration Release
+          -p src/DijitalKimlik.Infrastructure -s src/DijitalKimlik.Infrastructure
+          --context IssuerDbContext -o artifacts/db/issuer-idempotent.sql
+
+      - name: Veritabanı betiğini sakla
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: veritabani-betikleri
+          path: artifacts/db
+          retention-days: 30
 
       - name: Test sonuçlarını sakla
         if: always()

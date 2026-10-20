@@ -54,6 +54,17 @@ public class ForeignerServiceTests
     }
 
     [Fact]
+    public async Task RegisterAsync_maps_unique_violation_from_race_to_duplicate()
+    {
+        // Ön kontrol "yok" dedi, ama kaydederken veritabanı unique index ihlali bildirdi.
+        _unitOfWork.FailWith = new UniqueConstraintException("2601");
+
+        var result = await _service.RegisterAsync(ValidCommand());
+
+        Assert.Equal(ForeignerErrors.Duplicate, result.Error);
+    }
+
+    [Fact]
     public async Task RegisterAsync_rejects_invalid_identity_number()
     {
         var result = await _service.RegisterAsync(ValidCommand("99123456741"));
@@ -79,8 +90,15 @@ public class ForeignerServiceTests
     {
         public int SaveCount { get; private set; }
 
+        public Exception? FailWith { get; set; }
+
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
+            if (FailWith is not null)
+            {
+                return Task.FromException<int>(FailWith);
+            }
+
             SaveCount++;
             return Task.FromResult(1);
         }
