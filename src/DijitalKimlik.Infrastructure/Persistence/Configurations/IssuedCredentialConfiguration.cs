@@ -10,7 +10,10 @@ internal sealed class IssuedCredentialConfiguration : IEntityTypeConfiguration<I
 {
     public void Configure(EntityTypeBuilder<IssuedCredential> builder)
     {
-        builder.ToTable("IssuedCredentials");
+        // Tabloda trigger var (denetim kaydı). EF Core varsayılan olarak UPDATE ... OUTPUT INSERTED.RowVersion
+        // kullanır; SQL Server, trigger'lı tabloda INTO'suz OUTPUT'a izin vermez. HasTrigger ile EF
+        // daha yavaş ama uyumlu yola geçer: yeni değerleri ayrı bir SELECT ile okur.
+        builder.ToTable("IssuedCredentials", t => t.HasTrigger("trg_IssuedCredentials_StatusAudit"));
 
         builder.Property(c => c.CredentialId).HasMaxLength(64).IsUnicode(false);
         builder.HasIndex(c => c.CredentialId).IsUnique();

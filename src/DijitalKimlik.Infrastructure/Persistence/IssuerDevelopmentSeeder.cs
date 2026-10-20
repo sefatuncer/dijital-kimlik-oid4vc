@@ -24,9 +24,15 @@ public static class IssuerDevelopmentSeeder
         ("990000005", "Jonas", "Becker", 1990, "DEU", "C01X00T47", PermitType.ShortTerm),
     ];
 
+    /// <summary>Demo kişilerin yabancı kimlik numaraları.</summary>
+    public static IReadOnlyList<ForeignerIdentityNumber> IdentityNumbers { get; } =
+        [.. People.Select(p => ForeignerIdentityNumber.Create(p.First9 + ForeignerIdentityNumber.ComputeCheckDigits(p.First9)))];
+
     public static async Task SeedAsync(IssuerDbContext db, TimeProvider clock, CancellationToken cancellationToken = default)
     {
-        if (await db.StatusLists.AnyAsync(cancellationToken))
+        // "Daha önce yüklendi mi?" işareti, yüklenen verinin kendisidir. "Herhangi bir status list var
+        // mı?" gibi genel bir işaret, başka bir yoldan eklenen kayıt yüzünden yüklemeyi atlatır.
+        if (await db.Foreigners.AnyAsync(f => f.IdentityNumber == IdentityNumbers[0], cancellationToken))
         {
             return;
         }
@@ -39,8 +45,7 @@ public static class IssuerDevelopmentSeeder
         for (var i = 0; i < People.Length; i++)
         {
             var p = People[i];
-            var number = ForeignerIdentityNumber.Create(p.First9 + ForeignerIdentityNumber.ComputeCheckDigits(p.First9));
-            var foreigner = new Foreigner(number, p.Given, p.Family, new DateOnly(p.Year, 3, 15), p.Nationality, p.Passport, now);
+            var foreigner = new Foreigner(IdentityNumbers[i], p.Given, p.Family, new DateOnly(p.Year, 3, 15), p.Nationality, p.Passport, now);
             foreigner.GrantPermit($"IK-{today.Year}-{i + 1:D6}", p.Type, today.AddMonths(-1), today.AddYears(1));
             db.Foreigners.Add(foreigner);
         }

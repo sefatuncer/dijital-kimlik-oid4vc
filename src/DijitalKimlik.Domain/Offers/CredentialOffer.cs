@@ -15,13 +15,14 @@ public enum OfferStatus
     Locked = 4,
 }
 
+/// <remarks>Değerler sabittir: <c>issuer.usp_RedeemOffer</c> saklı yordamı bu sayıları döndürür.</remarks>
 public enum RedeemResult
 {
-    Success,
-    WrongTxCode,
-    Locked,
-    Expired,
-    AlreadyRedeemed,
+    Success = 0,
+    WrongTxCode = 1,
+    Locked = 2,
+    Expired = 3,
+    AlreadyRedeemed = 4,
 }
 
 /// <summary>

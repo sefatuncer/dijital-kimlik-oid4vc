@@ -2,6 +2,7 @@ using System.Net;
 
 using DijitalKimlik.Application.Offers;
 using DijitalKimlik.Infrastructure;
+using DijitalKimlik.Infrastructure.Persistence;
 using DijitalKimlik.IntegrationTests.Infrastructure;
 
 using Microsoft.AspNetCore.Hosting;
@@ -28,15 +29,19 @@ public sealed class IssuerSmokeTests(SqlServerFixture sql) : IDisposable
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
+        // Veritabanı diğer testlerle paylaşılıyor: sayım ("tam 1 status list") test sırasına bağlı olur
+        // ve bazen kırılır. Bunun yerine bu testin beklediği kayıtların kendisi aranır.
         await using var db = sql.CreateContext();
-        Assert.True(await db.Foreigners.CountAsync() >= 5);
-        Assert.Equal(1, await db.StatusLists.CountAsync());
+        var seeded = IssuerDevelopmentSeeder.IdentityNumbers;
+        Assert.Equal(seeded.Count, await db.Foreigners.CountAsync(f => seeded.Contains(f.IdentityNumber)));
+        Assert.True(await db.StatusLists.AnyAsync(l => l.Capacity == IssuerDevelopmentSeeder.DefaultStatusListCapacity));
     }
 
     [Theory]
     [InlineData(OfferRedemptionStrategy.Optimistic)]
     [InlineData(OfferRedemptionStrategy.Pessimistic)]
     [InlineData(OfferRedemptionStrategy.Atomic)]
+    [InlineData(OfferRedemptionStrategy.StoredProcedure)]
     public async Task Offer_redemption_strategy_is_selected_by_configuration(OfferRedemptionStrategy strategy)
     {
         await using var factory = _factory.WithWebHostBuilder(b =>

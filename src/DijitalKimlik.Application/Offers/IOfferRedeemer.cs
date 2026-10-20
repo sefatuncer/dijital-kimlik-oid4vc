@@ -3,7 +3,7 @@ using DijitalKimlik.Domain.Offers;
 namespace DijitalKimlik.Application.Offers;
 
 /// <summary>
-/// Aynı teklifi aynı anda kullanmaya çalışan isteklere karşı üç eşzamanlılık yöntemi. Üçü de
+/// Aynı teklifi aynı anda kullanmaya çalışan isteklere karşı dört eşzamanlılık yöntemi. Hepsi
 /// aynı sözleşmeyi uygular; hangisinin çalışacağı yapılandırmadan seçilir
 /// (<c>Persistence:OfferRedemptionStrategy</c>).
 /// </summary>
@@ -17,6 +17,9 @@ public enum OfferRedemptionStrategy
 
     /// <summary>Atomik: karar, tek bir koşullu UPDATE'in WHERE koşulunda veritabanınca verilir.</summary>
     Atomic = 3,
+
+    /// <summary>Saklı yordam: atomik UPDATE ve OUTPUT ile sonuç tek turda, kural T-SQL'de.</summary>
+    StoredProcedure = 4,
 }
 
 /// <summary>Teklifin kullanılma sonucu ve sonraki adımlar için gereken kimlikler.</summary>

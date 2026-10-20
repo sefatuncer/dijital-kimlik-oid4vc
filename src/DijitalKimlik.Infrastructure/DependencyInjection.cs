@@ -33,11 +33,12 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<IssuerDbContext>());
         services.AddScoped<IForeignerRepository, ForeignerRepository>();
 
-        // Üç eşzamanlılık yöntemi de keyed service olarak kayıtlı: testler ve karşılaştırmalar
+        // Dört eşzamanlılık yöntemi de keyed service olarak kayıtlı: testler ve karşılaştırmalar
         // anahtarıyla istediğini alır. Anahtarsız IOfferRedeemer, yapılandırmada seçilendir.
         services.AddKeyedScoped<IOfferRedeemer, OptimisticOfferRedeemer>(OfferRedemptionStrategy.Optimistic);
         services.AddKeyedScoped<IOfferRedeemer, PessimisticOfferRedeemer>(OfferRedemptionStrategy.Pessimistic);
         services.AddKeyedScoped<IOfferRedeemer, AtomicOfferRedeemer>(OfferRedemptionStrategy.Atomic);
+        services.AddKeyedScoped<IOfferRedeemer, StoredProcedureOfferRedeemer>(OfferRedemptionStrategy.StoredProcedure);
         var strategy = configuration.GetValue(OfferRedemptionStrategyKey, OfferRedemptionStrategy.Optimistic);
         services.AddScoped(sp => sp.GetRequiredKeyedService<IOfferRedeemer>(strategy));
 

@@ -67,7 +67,7 @@ Write-Host "Uygulama kullanıcısı oluşturuluyor..."
 Invoke-Native "docker cp" { docker cp (Join-Path $root "db\00-uygulama-kullanicilari.sql") dk-mssql:/tmp/00-uygulama-kullanicilari.sql }
 Invoke-Native "sqlcmd" {
     docker exec dk-mssql /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P $vars.MSSQL_SA_PASSWORD -b -f 65001 `
-        -i /tmp/00-uygulama-kullanicilari.sql -v "IssuerAppPassword=$($vars.DK_ISSUER_APP_PASSWORD)"
+        -i /tmp/00-uygulama-kullanicilari.sql -v "IssuerAppPassword=$($vars.DK_ISSUER_APP_PASSWORD)" "DatabaseName=DijitalKimlik"
 }
 
 Write-Host "Bağlantı dizesi user-secrets'a yazılıyor..."

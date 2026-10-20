@@ -147,7 +147,12 @@ namespace DijitalKimlik.Infrastructure.Persistence.Migrations
                     b.HasIndex("StatusListId", "StatusListIndex")
                         .IsUnique();
 
-                    b.ToTable("IssuedCredentials", "issuer");
+                    b.ToTable("IssuedCredentials", "issuer", t =>
+                        {
+                            t.HasTrigger("trg_IssuedCredentials_StatusAudit");
+                        });
+
+                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
                 });
 
             modelBuilder.Entity("DijitalKimlik.Domain.Foreigners.Foreigner", b =>
@@ -291,6 +296,16 @@ namespace DijitalKimlik.Infrastructure.Persistence.Migrations
                     b.Property<int>("ForeignerId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("PeriodEnd")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("datetime2")
+                        .HasColumnName("PeriodEnd");
+
+                    b.Property<DateTime>("PeriodStart")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("datetime2")
+                        .HasColumnName("PeriodStart");
+
                     b.Property<string>("PermitNumber")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -320,6 +335,17 @@ namespace DijitalKimlik.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("CK_ResidencePermits_Period", "[ValidUntil] >= [ValidFrom]");
                         });
+
+                    b.ToTable(tb => tb.IsTemporal(ttb =>
+                            {
+                                ttb.UseHistoryTable("ResidencePermitsHistory");
+                                ttb
+                                    .HasPeriodStart("PeriodStart")
+                                    .HasColumnName("PeriodStart");
+                                ttb
+                                    .HasPeriodEnd("PeriodEnd")
+                                    .HasColumnName("PeriodEnd");
+                            }));
                 });
 
             modelBuilder.Entity("DijitalKimlik.Domain.StatusLists.StatusList", b =>

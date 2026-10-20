@@ -23,7 +23,12 @@ public sealed class OfferRedemptionConcurrencyTests(SqlServerFixture sql)
     private const string Pin = "493017";
 
     public static TheoryData<OfferRedemptionStrategy> Strategies =>
-        [OfferRedemptionStrategy.Optimistic, OfferRedemptionStrategy.Pessimistic, OfferRedemptionStrategy.Atomic];
+    [
+        OfferRedemptionStrategy.Optimistic,
+        OfferRedemptionStrategy.Pessimistic,
+        OfferRedemptionStrategy.Atomic,
+        OfferRedemptionStrategy.StoredProcedure,
+    ];
 
     [Theory]
     [MemberData(nameof(Strategies))]
@@ -63,7 +68,8 @@ public sealed class OfferRedemptionConcurrencyTests(SqlServerFixture sql)
         }
         else
         {
-            // İyimser ve kötümser yöntemler istekleri fiilen sıraya dizer: ilk dördü WrongTxCode alır.
+            // İyimser ve kötümser yöntemler istekleri fiilen sıraya dizer; saklı yordam yeni durumu
+            // OUTPUT ile aynı komutta okur. Üçünde de ilk dört istek WrongTxCode alır.
             Assert.Equal(CredentialOffer.MaxTxCodeAttempts - 1, wrong);
         }
     }
@@ -137,6 +143,7 @@ public sealed class OfferRedemptionConcurrencyTests(SqlServerFixture sql)
             OfferRedemptionStrategy.Optimistic => new OptimisticOfferRedeemer(db, time),
             OfferRedemptionStrategy.Pessimistic => new PessimisticOfferRedeemer(db, time),
             OfferRedemptionStrategy.Atomic => new AtomicOfferRedeemer(db, time),
+            OfferRedemptionStrategy.StoredProcedure => new StoredProcedureOfferRedeemer(db, time),
             _ => throw new ArgumentOutOfRangeException(nameof(strategy)),
         };
 

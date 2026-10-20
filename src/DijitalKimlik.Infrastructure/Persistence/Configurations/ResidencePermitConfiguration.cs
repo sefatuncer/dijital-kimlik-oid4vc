@@ -9,9 +9,21 @@ internal sealed class ResidencePermitConfiguration : IEntityTypeConfiguration<Re
 {
     public void Configure(EntityTypeBuilder<ResidencePermit> builder)
     {
-        // Domain kuralı veritabanında da korunur: uygulama dışından yapılan bir INSERT de reddedilir.
         builder.ToTable("ResidencePermits", t =>
-            t.HasCheckConstraint("CK_ResidencePermits_Period", "[ValidUntil] >= [ValidFrom]"));
+        {
+            // Domain kuralı veritabanında da korunur: uygulama dışından yapılan bir INSERT de reddedilir.
+            t.HasCheckConstraint("CK_ResidencePermits_Period", "[ValidUntil] >= [ValidFrom]");
+
+            // Temporal table (system-versioned): SQL Server her değişiklikte satırın eski hâlini
+            // ResidencePermitsHistory tablosuna kendisi yazar. Denetim kaydının trigger'a alternatifi:
+            // kod yazmadan "bu iznin geçen ayki hâli neydi?" sorusu cevaplanır (TemporalAsOf).
+            t.IsTemporal(h =>
+            {
+                h.UseHistoryTable("ResidencePermitsHistory");
+                h.HasPeriodStart("PeriodStart");
+                h.HasPeriodEnd("PeriodEnd");
+            });
+        });
 
         builder.Property(p => p.PermitNumber).HasMaxLength(ResidencePermit.PermitNumberMaxLength).IsUnicode(false);
         builder.HasIndex(p => p.PermitNumber).IsUnique();
