@@ -1,0 +1,17 @@
+<Project>
+  <!-- Çözümdeki tüm projelere uygulanan ortak derleme ayarları. -->
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+
+    <!-- Kalite kapısı: uyarı derlemeyi durdurur, kod stili derlemede de denetlenir. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest</AnalysisLevel>
+
+    <Deterministic>true</Deterministic>
+    <Authors>Sefa Tunçer</Authors>
+    <Product>Dijital Kimlik (OpenID4VC demo)</Product>
+  </PropertyGroup>
+</Project>

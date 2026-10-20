@@ -1,0 +1,12 @@
+# Satır sonları depoda LF olarak saklanır, çalışma kopyasında işletim sistemine göre çevrilir.
+* text=auto
+
+*.sh   text eol=lf
+*.ps1  text eol=crlf
+*.cmd  text eol=crlf
+*.sql  text
+
+*.png  binary
+*.jpg  binary
+*.ico  binary
+*.pdf  binary

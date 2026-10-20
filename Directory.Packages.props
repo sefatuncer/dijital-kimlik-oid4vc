@@ -1,0 +1,11 @@
+<Project>
+  <!--
+    Merkezi paket sürüm yönetimi (Central Package Management).
+    Paket sürümleri yalnız burada yazılır; .csproj dosyalarında PackageReference sürümsüzdür.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+  </ItemGroup>
+</Project>
