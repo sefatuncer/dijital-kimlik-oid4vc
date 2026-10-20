@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DijitalKimlik.Application/DijitalKimlik.Application.csproj" />
+    <Project Path="src/DijitalKimlik.Crypto/DijitalKimlik.Crypto.csproj" />
+    <Project Path="src/DijitalKimlik.Domain/DijitalKimlik.Domain.csproj" />
+    <Project Path="src/DijitalKimlik.Infrastructure/DijitalKimlik.Infrastructure.csproj" />
+    <Project Path="src/DijitalKimlik.Issuer/DijitalKimlik.Issuer.csproj" />
+    <Project Path="src/DijitalKimlik.LegacySoap/DijitalKimlik.LegacySoap.csproj" />
+    <Project Path="src/DijitalKimlik.Verifier/DijitalKimlik.Verifier.csproj" />
+    <Project Path="src/DijitalKimlik.Wallet/DijitalKimlik.Wallet.csproj" />
+    <Project Path="src/DijitalKimlik.Worker/DijitalKimlik.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DijitalKimlik.IntegrationTests/DijitalKimlik.IntegrationTests.csproj" />
+    <Project Path="tests/DijitalKimlik.UnitTests/DijitalKimlik.UnitTests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,60 @@
+# Sürekli entegrasyon: her PR'da ve main'e her push'ta derle, biçimi denetle, test et.
+# Action'lar commit SHA'sına sabitlenir: etiket (v7) başka bir commit'e taşınabilir, SHA taşınamaz.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# En az yetki ilkesi: iş akışı depoyu yalnız okuyabilir.
+permissions:
+  contents: read
+
+# Aynı dala yeni bir push gelirse eski çalışma iptal edilir.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
+
+jobs:
+  build-test:
+    name: Derleme ve test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Kodu al
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: .NET SDK kur (global.json'daki sürüm)
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Paketleri geri yükle
+        run: dotnet restore
+
+      - name: Derle (Release, uyarılar hata)
+        run: dotnet build --no-restore -c Release
+
+      - name: Biçim denetimi
+        run: dotnet format --verify-no-changes --no-restore
+
+      - name: Test ve kod kapsamı
+        run: >
+          dotnet test --no-build -c Release
+          --collect:"XPlat Code Coverage"
+          --results-directory ./TestResults
+          --logger "trx;LogFilePrefix=test"
+
+      - name: Test sonuçlarını sakla
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: test-sonuclari
+          path: TestResults
+          retention-days: 14

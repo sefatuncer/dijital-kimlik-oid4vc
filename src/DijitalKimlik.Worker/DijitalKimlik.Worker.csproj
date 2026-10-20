@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-DijitalKimlik.Worker-2b5dcc36-8b37-4205-919c-39a8c0c94e91</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DijitalKimlik.Application\DijitalKimlik.Application.csproj" />
+    <ProjectReference Include="..\DijitalKimlik.Infrastructure\DijitalKimlik.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

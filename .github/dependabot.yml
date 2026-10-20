@@ -1,0 +1,20 @@
+# Bağımlılık güncellemeleri. Dependabot haftada bir PR açar; PR, CI'dan geçmeden birleşemez.
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    groups:
+      # İlgili paketler tek PR'da güncellenir (ör. tüm Microsoft.Extensions.* aynı sürüme).
+      microsoft:
+        patterns: ["Microsoft.*", "System.*"]
+      test:
+        patterns: ["xunit*", "coverlet*"]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
