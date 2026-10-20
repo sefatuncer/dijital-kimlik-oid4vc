@@ -1,8 +1,12 @@
 using System.Net;
 
+using DijitalKimlik.Application.Offers;
+using DijitalKimlik.Infrastructure;
 using DijitalKimlik.IntegrationTests.Infrastructure;
 
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DijitalKimlik.IntegrationTests;
 
@@ -27,6 +31,20 @@ public sealed class IssuerSmokeTests(SqlServerFixture sql) : IDisposable
         await using var db = sql.CreateContext();
         Assert.True(await db.Foreigners.CountAsync() >= 5);
         Assert.Equal(1, await db.StatusLists.CountAsync());
+    }
+
+    [Theory]
+    [InlineData(OfferRedemptionStrategy.Optimistic)]
+    [InlineData(OfferRedemptionStrategy.Pessimistic)]
+    [InlineData(OfferRedemptionStrategy.Atomic)]
+    public async Task Offer_redemption_strategy_is_selected_by_configuration(OfferRedemptionStrategy strategy)
+    {
+        await using var factory = _factory.WithWebHostBuilder(b =>
+            b.UseSetting(DependencyInjection.OfferRedemptionStrategyKey, strategy.ToString()));
+
+        await using var scope = factory.Services.CreateAsyncScope();
+
+        Assert.Equal(strategy, scope.ServiceProvider.GetRequiredService<IOfferRedeemer>().Strategy);
     }
 
     public void Dispose() => _factory.Dispose();
