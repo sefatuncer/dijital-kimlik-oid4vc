@@ -1,8 +1,5 @@
-using System.Security.Cryptography;
-
 using DijitalKimlik.Application.Abstractions;
 using DijitalKimlik.Domain.Credentials;
-using DijitalKimlik.Domain.Foreigners;
 using DijitalKimlik.Domain.Permits;
 using DijitalKimlik.Domain.StatusLists;
 using DijitalKimlik.IntegrationTests.Infrastructure;
@@ -15,13 +12,13 @@ namespace DijitalKimlik.IntegrationTests;
 [Collection(SqlServerCollection.Name)]
 public sealed class IssuerPersistenceTests(SqlServerFixture sql)
 {
-    private static readonly DateTimeOffset Now = new(2026, 10, 21, 9, 0, 0, TimeSpan.Zero);
+    private static readonly DateTimeOffset Now = TestEntities.Now;
 
     [Fact]
     public async Task Value_object_round_trips_and_permits_load_with_include()
     {
-        var foreigner = NewForeigner();
-        foreigner.GrantPermit(NewPermitNumber(), PermitType.Student, new DateOnly(2026, 9, 1), new DateOnly(2027, 8, 31));
+        var foreigner = TestEntities.NewForeigner();
+        foreigner.GrantPermit(TestEntities.NewPermitNumber(), PermitType.Student, new DateOnly(2026, 9, 1), new DateOnly(2027, 8, 31));
         await using (var db = sql.CreateContext())
         {
             db.Foreigners.Add(foreigner);
@@ -42,16 +39,16 @@ public sealed class IssuerPersistenceTests(SqlServerFixture sql)
     [Fact]
     public async Task Duplicate_identity_number_is_translated_to_unique_constraint_exception()
     {
-        var first9 = NewFirst9();
+        var first9 = TestEntities.NewFirst9();
         await using (var db = sql.CreateContext())
         {
-            db.Foreigners.Add(NewForeigner(first9));
+            db.Foreigners.Add(TestEntities.NewForeigner(first9));
             await db.SaveChangesAsync();
         }
 
         // İkinci istek ön kontrolü atlamış gibi doğrudan ekler: unique index yakalamalı.
         await using var second = sql.CreateContext();
-        second.Foreigners.Add(NewForeigner(first9));
+        second.Foreigners.Add(TestEntities.NewForeigner(first9));
 
         var ex = await Assert.ThrowsAsync<UniqueConstraintException>(() => second.SaveChangesAsync());
         Assert.IsType<DbUpdateException>(ex.InnerException);
@@ -83,13 +80,13 @@ public sealed class IssuerPersistenceTests(SqlServerFixture sql)
     [Fact]
     public async Task Check_constraint_rejects_invalid_period_even_from_raw_sql()
     {
-        var foreigner = NewForeigner();
+        var foreigner = TestEntities.NewForeigner();
         await using var db = sql.CreateContext();
         db.Foreigners.Add(foreigner);
         await db.SaveChangesAsync();
 
         // Domain kuralını atlayan doğrudan SQL. ExecuteSqlInterpolated değerleri parametre olarak gönderir.
-        var permitNumber = NewPermitNumber();
+        var permitNumber = TestEntities.NewPermitNumber();
         var ex = await Assert.ThrowsAsync<SqlException>(() => db.Database.ExecuteSqlInterpolatedAsync(
             $"""
             INSERT INTO issuer.ResidencePermits (ForeignerId, PermitNumber, Type, ValidFrom, ValidUntil, Status)
@@ -103,8 +100,8 @@ public sealed class IssuerPersistenceTests(SqlServerFixture sql)
     {
         await using var db = sql.CreateContext();
         var list = new StatusList(1024, Now);
-        var foreigner = NewForeigner();
-        var permit = foreigner.GrantPermit(NewPermitNumber(), PermitType.ShortTerm, new DateOnly(2026, 1, 1), new DateOnly(2027, 1, 1));
+        var foreigner = TestEntities.NewForeigner();
+        var permit = foreigner.GrantPermit(TestEntities.NewPermitNumber(), PermitType.ShortTerm, new DateOnly(2026, 1, 1), new DateOnly(2027, 1, 1));
         db.StatusLists.Add(list);
         db.Foreigners.Add(foreigner);
         await db.SaveChangesAsync();
@@ -115,17 +112,5 @@ public sealed class IssuerPersistenceTests(SqlServerFixture sql)
         db.IssuedCredentials.Add(credential);
         await db.SaveChangesAsync();
         return credential.Id;
-    }
-
-    // Testler aynı veritabanını paylaşır: her test kendi benzersiz numaralarını üretir.
-    private static string NewFirst9() => "99" + RandomNumberGenerator.GetInt32(0, 10_000_000).ToString("D7", System.Globalization.CultureInfo.InvariantCulture);
-
-    private static string NewPermitNumber() => "IK-T-" + RandomNumberGenerator.GetHexString(10);
-
-    private static Foreigner NewForeigner(string? first9 = null)
-    {
-        first9 ??= NewFirst9();
-        var number = ForeignerIdentityNumber.Create(first9 + ForeignerIdentityNumber.ComputeCheckDigits(first9));
-        return new Foreigner(number, "Test", "Kişi", new DateOnly(1990, 1, 1), "IRN", "T" + first9, Now);
     }
 }
