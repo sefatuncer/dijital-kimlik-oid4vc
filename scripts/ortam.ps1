@@ -1,4 +1,4 @@
-# Kullanıcı klasörüne kurulu .NET SDK'yı bu PowerShell oturumunda etkinleştirir.
+﻿# Kullanıcı klasörüne kurulu .NET SDK'yı bu PowerShell oturumunda etkinleştirir.
 #
 # Kullanım (baştaki nokta ve boşluk önemli, betik mevcut oturumu değiştirir):
 #   . .\scripts\ortam.ps1
