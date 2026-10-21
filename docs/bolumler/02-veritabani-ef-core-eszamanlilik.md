@@ -121,6 +121,10 @@ keyed service olarak kayıtlı. Dördüncü yöntem, saklı yordam, Bölüm 3'te
 Paralel istekler bir `TaskCompletionSource` kapısında bekletilip aynı anda bırakılır. Bunu
 yapmazsan görevler sırayla başlar ve yarış hiç oluşmaz.
 
+Yöntemlerin yük altındaki hızı ve gecikmesi ayrıca ölçüldü: `docs/olcumler/01-eszamanlilik-yontemleri.md`.
+Ölçüm, kötümser yöntemde bir parametre tipi hatası yakaladı: `nvarchar` gönderilmesi tablo
+taramasına ve kilit beklemesine yol açıyordu. Hata düzeltildi ve regresyon testi eklendi.
+
 ## 6. Çıkan sorunlar ve dersler
 
 | Sorun | Neden | Çözüm |

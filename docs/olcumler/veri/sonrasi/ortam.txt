@@ -1,0 +1,7 @@
+tarih_utc=2026-10-21T13:33:45.6230290+00:00
+isletim_sistemi=Ubuntu 26.04.1 LTS
+dotnet=.NET 10.0.12
+mantiksal_islemci=12
+sunucu_gc=True
+veritabani=DK_OLCUM_BAGLANTI ile verilen SQL Server
+plan=tur=30, paralel=10, isci=[1 4 16 32 64], isci_basi_islem=60, isinma=40
