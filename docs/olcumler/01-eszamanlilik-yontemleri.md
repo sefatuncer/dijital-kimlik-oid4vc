@@ -5,13 +5,26 @@
 | Araç | `tools/DijitalKimlik.Olcum` |
 | Tarih | 21.10.2026 |
 | Ham veri | `docs/olcumler/veri/oncesi/` ve `veri/sonrasi/` (CSV ve `ortam.txt`) |
-| Ortam | Geliştirici dizüstü bilgisayarı (Core Ultra 9 285H, 32 GB). Docker Desktop/WSL2 (12 vCPU). Araç bir Linux konteynerinde (.NET 10, sunucu GC), SQL Server 2022 ayrı bir konteynerde, ikisi aynı Docker ağında |
+| Ortam | Geliştirici dizüstü bilgisayarı (Core Ultra 9 285H, 32 GB). Docker Desktop/WSL2 (12 vCPU). Araç bir Linux konteynerinde (.NET 10, sunucu GC: çok çekirdekte çöp toplamayı paralel yapan, sunucu uygulamaları için olan mod), SQL Server 2022 ayrı bir konteynerde, ikisi aynı Docker ağında |
 
 ## Neden ölçtük
 
 Testler yöntemlerin **doğru** çalıştığını kanıtlıyor: bir teklif yalnız bir kez kullanılıyor,
 beşinci yanlış PIN teklifi kilitliyor. Testler yöntemlerin **ne kadar** iyi çalıştığını
 söylemiyor. Ölçüm bu soruyu cevaplıyor ve testlerin göremediği bir hatayı yakaladı.
+
+Dört yöntem Not 2 ve Not 3'te anlatılıyor: iyimser (`rowversion`), kötümser (`UPDLOCK`), atomik
+(koşullu `UPDATE`) ve stored procedure (SP).
+
+Okurken bilinmesi gereken terimler:
+
+- **İşçi (worker):** aynı anda çalışan ve sürekli istek gönderen bir görev. 16 işçi, aynı anda 16
+  isteğin işlendiği yük demektir.
+- **İşlem/sn (throughput, verim):** saniyede başarıyla biten işlem sayısı. Yüksek olan iyidir.
+- **Gecikme yüzdelikleri:** p50, isteklerin yarısının bu süreden kısa bittiğini söyler (medyan).
+  p95, isteklerin %95'inin bu süreden kısa bittiğini söyler. Kalan %5 en yavaş isteklerdir. p99 da
+  aynı mantıkla en yavaş %1'i ayırır. Ortalama yerine yüzdelik kullanılır, çünkü ortalama birkaç
+  çok yavaş isteği gizler. Kullanıcının hissettiği yavaşlık p95 ve p99'dadır.
 
 ## Senaryolar
 
@@ -22,8 +35,11 @@ söylemiyor. Ölçüm bu soruyu cevaplıyor ve testlerin göremediği bir hatay�
    saniyedeki işlem sayısı ve gecikme yüzdelikleri (p50/p95/p99).
 
 Her istek yeni bir DI scope'u ile, yani yeni bir `DbContext` ile yapılır; tıpkı bir HTTP isteği
-gibi. Ölçülmeden önce her yöntem 40 işlemle ısıtılır. Her işçi düzeyinde dört yöntem sırayla
-koşar, böylece zamanla değişen koşullar tek bir yöntemin aleyhine birikmez.
+gibi. Ölçülmeden önce her yöntem 40 işlemle **ısıtılır**. Isıtma, ilk çağrılardaki tek seferlik
+maliyetlerin (JIT derlemesi, bağlantı havuzunun dolması, SQL Server'ın sorgu planı üretmesi)
+ölçüme karışmaması için yapılan, sonucu sayılmayan çalıştırmadır. Her işçi düzeyinde dört yöntem
+sırayla koşar, böylece zamanla değişen koşullar (makinenin ısınması, arka plan işleri) tek bir
+yöntemin aleyhine birikmez.
 
 Çalıştırma (Docker açık olmalı):
 
@@ -44,13 +60,24 @@ hızlandı. Belirtiler:
 - p95 gecikme 1,2 saniyeye çıktı.
 
 **Neden:** `FromSql($"... WHERE PreAuthorizedCodeHash = {hash}")` içinde `hash` düz bir C#
-`string`'i. Bu parametre `nvarchar` olarak gider, sütun ise `char(43)` ve SQL collation'lı.
-SQL Server karşılaştırmak için sütunu dönüştürmek zorunda kalır (`CONVERT_IMPLICIT`), indeksi
-kullanamaz ve tabloyu baştan sona tarar. Tarama `UPDLOCK` ile yapıldığı için okuduğu her satırda
-U kilidi ister. Başka bir isteğin kilitli tuttuğu ilgisiz bir teklife gelince bekler. Sonuçta
-farklı teklifler birbirini sıraya sokar.
+`string`'i. Bu parametre `nvarchar` (Unicode metin) olarak gider. Sütun ise `char(43)` (Unicode
+olmayan, sabit uzunlukta metin) ve bir SQL **collation**'ı kullanıyor. Collation, metinlerin nasıl
+karşılaştırılıp sıralanacağını belirleyen kurallar setidir (büyük/küçük harf, aksan, dil).
 
-Sorgu planıyla doğrulandı:
+Zincirleme sonuç şöyle:
+
+1. Tipler farklı olduğu için SQL Server karşılaştırmadan önce sütunu parametrenin tipine dönüştürür
+   (`CONVERT_IMPLICIT`). Bu collation'da dönüşüm indeks sırasını korumaz.
+2. Dönüştürülmüş değerde indeks aranamaz. SQL Server tabloyu baştan sona tarar.
+3. Tarama `UPDLOCK` ile yapıldığı için okuduğu **her satırda** U kilidi (update kilidi: "bu satırı
+   güncelleyeceğim, başkası güncellemesin") ister.
+4. Başka bir isteğin kilitli tuttuğu ilgisiz bir teklife gelince bekler.
+
+Sonuç: birbiriyle hiç ilgisi olmayan teklifler birbirini sıraya sokar. İşçi arttıkça bekleme
+artar ve verim düşer.
+
+Sorgu planıyla doğrulandı. **Clustered Index Scan** tablonun bütün satırlarını okumak, **Index
+Seek** ise indeksten doğrudan aranan satıra gitmektir:
 
 ```text
 nvarchar parametre:  Clustered Index Scan  WHERE: CONVERT_IMPLICIT(nchar(43), PreAuthorizedCodeHash) = @h
@@ -133,6 +160,11 @@ xychart-beta
 
 ### Çekişme (öncesi): aynı teklife 10 eşzamanlı istek, ilk tur hariç medyan ms
 
+Tablo sütunları: "Doğru PIN: ms", 10 isteğin hepsinin bitme süresidir (ilk tur ısınma sayılıp
+dışarıda bırakıldı, kalanların medyanı). "WrongTxCode / Locked", yanlış PIN senaryosunda 10 isteğin
+kaçının "yanlış PIN, hakkın var" ve kaçının "kilitlendi" cevabı aldığıdır. "Son deneme sayısı",
+turun sonunda teklifte kayıtlı yanlış deneme sayısıdır; 5 olmalıdır.
+
 | Yöntem | Doğru PIN: ms | Başarılı | Yanlış PIN: ms | WrongTxCode / Locked | Son deneme sayısı |
 |---|---:|---|---:|---|---|
 | İyimser | 12.7 | 1 (30 turda) | 36.5 | 4/6 | 5 |
@@ -150,7 +182,8 @@ xychart-beta
 | SP | 5.2 | 1 (30 turda) | 13.3 | 4/6 | 5 |
 
 
-Grafiklerdeki ilk çizgi düzeltmeden önceki, ikincisi düzeltmeden sonraki ölçüm.
+"Kötümser yöntem" grafiğindeki ilk çizgi düzeltmeden önceki, ikincisi düzeltmeden sonraki ölçümdür.
+Düzeltmeden önce işçi arttıkça verim düşüyor; sonra işçiyle birlikte artıyor.
 
 ## Sonuçların yorumu
 
@@ -158,7 +191,8 @@ Grafiklerdeki ilk çizgi düzeltmeden önceki, ikincisi düzeltmeden sonraki öl
   - Doğru PIN'de her zaman tam 1 başarı.
   - Yanlış PIN'de her zaman 5 deneme ve kilit; sonuçların 4'ü WrongTxCode, 6'sı Locked.
 - **Verim:** Kararı tek komutta veritabanına veren yöntemler (SP ve atomik) yüksek eşzamanlılıkta
-  önde. Bir tur yeterli: oku-karar ver-yaz yok, kilit süresi kısa.
+  önde. Uygulama ile veritabanı arasında tek bir gidiş-dönüş (round trip) yeterli: önce oku, sonra
+  karar ver, sonra yaz adımları yok. Kilit yalnız o tek komut süresince tutulur.
 - **İyimser yöntem:** Farklı tekliflerde çakışma olmadığından yeniden deneme yok ve iyi ölçekleniyor.
   Aynı teklifte çekişme olunca yeniden denemeler gecikmeyi artırır; yanlış PIN senaryosu bunu
   gösteriyor.

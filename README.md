@@ -1,6 +1,6 @@
 # Dijital Kimlik: OpenID4VCI ve OpenID4VP ile dijital ikamet izni
 
-Bu depo, .NET 10 ile yazılmış bir **eğitim ve demo projesi**. Hayali bir "Demo Göç Kurumu",
+Bu depo, .NET 10 ile yazılmış bir **referans uygulama**. Hayali bir "Demo Göç Kurumu",
 yabancılara dijital ikamet izni kimlik bilgisi (SD-JWT VC) veriyor. Yabancı bu bilgiyi web
 cüzdanında saklıyor. Doğrulayıcı kurumlar yalnız ihtiyaç duydukları alanları istiyor ve doğruluyor.
 
@@ -33,5 +33,15 @@ dotnet test
 
 ## Belgeler
 
-Her geliştirme adımı `docs/bolumler/` altında ayrı bir bölüm olarak anlatılıyor: amaç, kavramlar,
-komutlar, kod, çıkan sorunlar ve mülakat soruları.
+| Klasör | İçerik |
+|---|---|
+| `docs/gelistirme/` | Her geliştirme adımının notu: amaç, tasarım kararları, komutlar, karşılaşılan sorunlar ve alternatifler |
+| `docs/olcumler/` | Performans ölçümleri: yöntem, ham veri, sonuçlar ve yorum |
+
+| Not | Konu |
+|---|---|
+| [00](docs/gelistirme/00-ortam-git-github.md) | Geliştirme ortamı, Git ve GitHub iş akışı |
+| [01](docs/gelistirme/01-iskelet-mimari-domain.md) | Çözüm iskeleti, katmanlı mimari, domain modeli |
+| [02](docs/gelistirme/02-veritabani-ef-core-eszamanlilik.md) | SQL Server, EF Core ve eşzamanlılık |
+| [03](docs/gelistirme/03-programlanabilirlik-sp-function-trigger.md) | Stored procedure, function, trigger, temporal table, veritabanı dağıtımı |
+| [Ölçüm 1](docs/olcumler/01-eszamanlilik-yontemleri.md) | Dört eşzamanlılık yönteminin yük altında karşılaştırması |
