@@ -128,11 +128,28 @@ gh api -X PUT repos/sefatuncer/dijital-kimlik-oid4vc/automated-security-fixes   
 ```
 
 Ayrıca **secret scanning** ve **push protection** açıldı. Bir anahtar ya da parola yanlışlıkla
-commit'lenirse GitHub push'u reddeder. Merge yöntemi yalnız *squash* olarak ayarlandı (her PR
-`main`'de tek commit olur) ve birleşen dallar otomatik siliniyor.
+commit'lenirse GitHub push'u reddeder. Merge yöntemi ilk başta yalnız *squash* olarak ayarlandı
+(her PR `main`'de tek commit olur) ve birleşen dallar otomatik siliniyor.
 
 Branch protection (PR zorunlu, CI geçmeden merge yok) Faz 1'de CI eklendikten sonra açılacak.
 Zorunlu kontrolün adı ancak CI bir kez çalıştıktan sonra seçilebiliyor.
+
+**Sonradan değişti (Faz 2):** GitHub'ın web birleştirmesi, squash da rebase de, committer alanına
+hesabın birincil e-postasını yazıyor. `gh pr merge --author-email` ise noreply adresini kabul
+etmedi. Bu yüzden akış şöyle oldu:
+
+1. Faz dalı push edilir.
+2. PR açılır ve CI'ın yeşil olması beklenir.
+3. Dal `main`'e yerelden fast-forward edilir: `git push origin <dal>:main`.
+
+Branch protection şimdi şunları zorunlu tutuyor:
+
+- "Derleme ve test" kontrolü geçmeli (strict: dal `main`'in ucunda olmalı).
+- Geçmiş doğrusal olmalı.
+- Force push ve dal silme kapalı.
+- Kurallar yöneticiye de uygulanıyor.
+
+PR zorunluluğu kaldırıldı, ama her faz yine PR ile incelenir.
 
 ## 4. Çıkan sorunlar ve çözümleri
 
