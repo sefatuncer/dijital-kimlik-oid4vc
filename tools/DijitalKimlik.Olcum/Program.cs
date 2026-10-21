@@ -11,7 +11,7 @@
 //   2) Verim: her işçi farklı bir teklifi kullanır (gerçek trafiğe benzer). İşçi sayısı artırılır;
 //      saniyedeki işlem ve gecikme yüzdelikleri (p50/p95/p99) ölçülür.
 // Her istek yeni bir DI scope'u (yeni DbContext) ile yapılır, tıpkı bir HTTP isteği gibi.
-// Sonuçlar CSV olarak yazılır; öğretim notlarındaki grafikler bu dosyalardan çizilir.
+// Sonuçlar CSV olarak yazılır; docs/olcumler altındaki tablolar ve grafikler bu dosyalardan üretilir.
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
