@@ -12,6 +12,10 @@ namespace DijitalKimlik.Infrastructure.Persistence.Migrations;
 /// dosya ileride değiştiğinde bu eski migration da sessizce değişirdi; bir migration yazıldığı
 /// günkü hâliyle donmalıdır. Her nesne ayrı <c>Sql</c> çağrısındadır, çünkü <c>CREATE OR ALTER</c>
 /// bir batch'in ilk ifadesi olmalıdır.
+/// <para>Her <c>CREATE</c> ayrıca <see cref="Exec"/> ile dinamik SQL'e sarılır. İdempotent betikte
+/// (<c>migrations script --idempotent</c>) EF her migration'ı <c>IF NOT EXISTS (...) BEGIN ... END</c>
+/// bloğuna koyar; <c>CREATE FUNCTION/PROCEDURE/TRIGGER</c> böyle bir bloğun içinde geçersizdir
+/// ("must be the first statement in a query batch"). <c>EXEC</c> içindeki metin kendi batch'idir.</para>
 /// </remarks>
 public partial class Programmability : Migration
 {
@@ -19,7 +23,7 @@ public partial class Programmability : Migration
     {
         // 1a) Scalar function: kontrol hanelerini döngüyle hesaplar. Okunması kolaydır, ama bir
         // sorguda her satır için ayrı ayrı çağrılır.
-        migrationBuilder.Sql("""
+        migrationBuilder.Sql(Exec("""
             CREATE OR ALTER FUNCTION issuer.ufn_IdentityNumberCheckDigits (@FirstNine char(9))
             RETURNS char(2)
             WITH SCHEMABINDING, RETURNS NULL ON NULL INPUT
@@ -43,11 +47,11 @@ public partial class Programmability : Migration
                 DECLARE @Tenth int = (((@Odd * 7) - @Even) % 10 + 10) % 10;
                 RETURN CONCAT(@Tenth, (@Odd + @Even + @Tenth) % 10);
             END;
-            """);
+            """));
 
         // 1b) Aynı hesap inline table-valued function olarak. Tek bir SELECT'tir; optimizer onu
         // çağıran sorgunun içine açar (view gibi), satır satır çağrı maliyeti yoktur.
-        migrationBuilder.Sql("""
+        migrationBuilder.Sql(Exec("""
             CREATE OR ALTER FUNCTION issuer.itvf_IdentityNumberCheckDigits (@FirstNine char(9))
             RETURNS TABLE
             WITH SCHEMABINDING
@@ -65,12 +69,12 @@ public partial class Programmability : Migration
                       + TRY_CAST(SUBSTRING(@FirstNine, 6, 1) AS int) + TRY_CAST(SUBSTRING(@FirstNine, 8, 1) AS int)
                      )) AS s (Odd, Even)
                 CROSS APPLY (VALUES ((((s.Odd * 7) - s.Even) % 10 + 10) % 10)) AS t (Tenth);
-            """);
+            """));
 
         // 2) Stored procedure: teklifi tek komutta kullanır. C# tarafındaki iyimser, kötümser ve
         // atomik yöntemlerin dördüncü alternatifi. OUTPUT ... INTO, güncellenen satırın eski ve yeni
         // değerlerini aynı komutta verir: EF Core ExecuteUpdate'in veremediği bilgi.
-        migrationBuilder.Sql("""
+        migrationBuilder.Sql(Exec("""
             CREATE OR ALTER PROCEDURE issuer.usp_RedeemOffer
                 @PreAuthorizedCodeHash char(43),
                 @TxCodeHash            char(43),
@@ -122,13 +126,13 @@ public partial class Programmability : Migration
                 WHERE PreAuthorizedCodeHash = @PreAuthorizedCodeHash;
                 RETURN 0;
             END;
-            """);
+            """));
 
         // 3) Trigger: kimlik bilgisinin durumu her değiştiğinde denetim kaydı yazar. Uygulama
         // kullanıcısının audit şemasına INSERT yetkisi yok; trigger ile audit tablosu aynı sahibe
         // (dbo) ait olduğundan ownership chaining sayesinde yazabilir. Kayıt uygulamayı atlayan
         // doğrudan SQL güncellemelerinde de tutulur.
-        migrationBuilder.Sql("""
+        migrationBuilder.Sql(Exec("""
             CREATE OR ALTER TRIGGER issuer.trg_IssuedCredentials_StatusAudit
             ON issuer.IssuedCredentials
             AFTER UPDATE
@@ -153,7 +157,7 @@ public partial class Programmability : Migration
                 JOIN deleted AS d ON d.Id = i.Id
                 WHERE i.Status <> d.Status;
             END;
-            """);
+            """));
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
@@ -163,4 +167,7 @@ public partial class Programmability : Migration
         migrationBuilder.Sql("DROP FUNCTION IF EXISTS issuer.itvf_IdentityNumberCheckDigits;");
         migrationBuilder.Sql("DROP FUNCTION IF EXISTS issuer.ufn_IdentityNumberCheckDigits;");
     }
+
+    /// <summary>Metni <c>EXEC(N'...')</c> içine alır; tek tırnaklar (yorumlardakiler de) ikilenir.</summary>
+    private static string Exec(string sql) => $"EXEC(N'{sql.Replace("'", "''", StringComparison.Ordinal)}');";
 }

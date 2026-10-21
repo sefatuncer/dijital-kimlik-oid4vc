@@ -52,23 +52,6 @@ jobs:
           --results-directory ./TestResults
           --logger "trx;LogFilePrefix=test"
 
-      - name: dotnet-ef aracını geri yükle
-        run: dotnet tool restore
-
-      # Üretimde migration'ı uygulama değil DBA çalıştırır: tekrar çalıştırılabilir (idempotent) betik.
-      - name: Veritabanı betiği üret (DBA için idempotent SQL)
-        run: >
-          dotnet ef migrations script --idempotent --no-build --configuration Release
-          -p src/DijitalKimlik.Infrastructure -s src/DijitalKimlik.Infrastructure
-          --context IssuerDbContext -o artifacts/db/issuer-idempotent.sql
-
-      - name: Veritabanı betiğini sakla
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: veritabani-betikleri
-          path: artifacts/db
-          retention-days: 30
-
       - name: Test sonuçlarını sakla
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -76,3 +59,78 @@ jobs:
           name: test-sonuclari
           path: TestResults
           retention-days: 14
+
+  # Canlıda migration'ı uygulama açılışta değil, kurulum adımı çalıştırır. İki yol provası yapılır:
+  # DBA'ya verilen idempotent SQL betiği ve tek dosyalık migration bundle. İkisi de İKİ kez
+  # uygulanır: ikinci çalıştırma hata vermemeli ve hiçbir şeyi değiştirmemelidir.
+  db-deploy:
+    name: Veritabanı dağıtım provası
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          # Yalnız bu çalıştırmanın geçici konteyneri için; dışarıya açık değil.
+          MSSQL_SA_PASSWORD: Dk-${{ github.run_id }}-aA1
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P $MSSQL_SA_PASSWORD -Q 'SELECT 1' -b"
+          --health-interval 10s --health-timeout 5s --health-retries 12
+
+    env:
+      SA_PASSWORD: Dk-${{ github.run_id }}-aA1
+
+    steps:
+      - name: Kodu al
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: .NET SDK kur (global.json'daki sürüm)
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Derle ve dotnet-ef aracını geri yükle
+        run: |
+          dotnet tool restore
+          dotnet build src/DijitalKimlik.Infrastructure -c Release
+
+      - name: Idempotent SQL betiği ve migration bundle üret
+        run: |
+          dotnet ef migrations script --idempotent --no-build --configuration Release             -p src/DijitalKimlik.Infrastructure -s src/DijitalKimlik.Infrastructure             --context IssuerDbContext -o artifacts/db/issuer-idempotent.sql
+          dotnet ef migrations bundle --configuration Release --force             -p src/DijitalKimlik.Infrastructure -s src/DijitalKimlik.Infrastructure             --context IssuerDbContext -o artifacts/db/issuer-efbundle
+
+      # -I: QUOTED_IDENTIFIER ON. Filtreli indeks ister; sqlcmd'nin varsayılanı OFF (Msg 1934).
+      # -b: ilk hatada sıfırdan farklı çıkış kodu. Betik konteynere kopyalanıp onun sqlcmd'si ile çalışır.
+      - name: Idempotent betiği iki kez uygula
+        run: |
+          id='${{ job.services.mssql.id }}'
+          sq() { docker exec -e SQLCMDPASSWORD="$SA_PASSWORD" "$id" /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -b -I "$@"; }
+          docker cp artifacts/db/issuer-idempotent.sql "$id":/tmp/issuer-idempotent.sql
+          sq -Q "CREATE DATABASE DkBetik"
+          for i in 1 2; do echo "Çalıştırma $i"; sq -d DkBetik -i /tmp/issuer-idempotent.sql > /dev/null; done
+
+      - name: Migration bundle'ı iki kez çalıştır
+        run: |
+          cs="Server=localhost,1433;Database=DkBundle;User Id=sa;Password=$SA_PASSWORD;TrustServerCertificate=True"
+          for i in 1 2; do echo "Çalıştırma $i"; ./artifacts/db/issuer-efbundle --connection "$cs"; done
+
+      - name: İki veritabanının aynı şemaya ulaştığını doğrula
+        run: |
+          id='${{ job.services.mssql.id }}'
+          q="SET NOCOUNT ON; SELECT (SELECT COUNT(*) FROM issuer.__EFMigrationsHistory), (SELECT COUNT(*) FROM sys.objects WHERE type IN ('FN','IF','P','TR')), (SELECT COUNT(*) FROM sys.tables WHERE temporal_type = 2)"
+          for db in DkBetik DkBundle; do
+            r=$(docker exec -e SQLCMDPASSWORD="$SA_PASSWORD" "$id" /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -b -I -d "$db" -h -1 -W -s ',' -Q "$q" | tr -d '[:space:]')
+            echo "$db: migration,nesne,temporal = $r"
+            echo "$r" | grep -Eq '^[1-9][0-9]*,4,1$' || { echo "::error::$db beklenen şemada değil"; exit 1; }
+          done
+
+      - name: Veritabanı betiklerini sakla
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: veritabani-betikleri
+          path: artifacts/db
+          retention-days: 30
