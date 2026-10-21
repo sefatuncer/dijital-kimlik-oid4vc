@@ -14,4 +14,7 @@
     <Project Path="tests/DijitalKimlik.IntegrationTests/DijitalKimlik.IntegrationTests.csproj" />
     <Project Path="tests/DijitalKimlik.UnitTests/DijitalKimlik.UnitTests.csproj" />
   </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/DijitalKimlik.Olcum/DijitalKimlik.Olcum.csproj" />
+  </Folder>
 </Solution>

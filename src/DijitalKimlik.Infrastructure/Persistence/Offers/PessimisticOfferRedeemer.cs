@@ -1,6 +1,9 @@
+using System.Data;
+
 using DijitalKimlik.Application.Offers;
 using DijitalKimlik.Domain.Offers;
 
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace DijitalKimlik.Infrastructure.Persistence.Offers;
@@ -35,8 +38,14 @@ internal sealed class PessimisticOfferRedeemer(IssuerDbContext db, TimeProvider 
 
                 // FromSql değerleri parametre olarak gönderir (SQL injection yok). EF bu sorguyu
                 // alt sorgu olarak sarar; tablo ipucu alt sorgunun içinde de geçerlidir.
+                // Parametrenin tipi sütunla aynı olmalı: char(43). Düz string nvarchar olarak gider;
+                // SQL Server sütunu dönüştürür (CONVERT_IMPLICIT), indeksi kullanamaz ve tabloyu
+                // tarar. UPDLOCK ile tarama, başka tekliflerin kilitli satırlarında da bekler ve
+                // farklı teklifler birbirini sıraya sokar. Ölçüm aracı (tools/DijitalKimlik.Olcum)
+                // bunu 8 işçide 161 işlem/sn ile yakaladı; diğer yöntemler 1.000'in üzerindeydi.
+                var hashParameter = new SqlParameter("@hash", SqlDbType.Char, 43) { Value = hash };
                 var offer = await db.CredentialOffers
-                    .FromSql($"SELECT * FROM issuer.CredentialOffers WITH (UPDLOCK, ROWLOCK) WHERE PreAuthorizedCodeHash = {hash}")
+                    .FromSql($"SELECT * FROM issuer.CredentialOffers WITH (UPDLOCK, ROWLOCK) WHERE PreAuthorizedCodeHash = {hashParameter}")
                     .SingleOrDefaultAsync(ct);
                 if (offer is null)
                 {

@@ -1,3 +1,4 @@
+using System.Data;
 using System.Security.Cryptography;
 
 using DijitalKimlik.Application.Offers;
@@ -7,6 +8,7 @@ using DijitalKimlik.Infrastructure.Persistence;
 using DijitalKimlik.Infrastructure.Persistence.Offers;
 using DijitalKimlik.IntegrationTests.Infrastructure;
 
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
 
@@ -135,6 +137,37 @@ public sealed class OfferRedemptionConcurrencyTests(SqlServerFixture sql)
 
         // Her istek "kullandım" dedi: aynı tekliften on ayrı kimlik bilgisi çıkardı.
         Assert.Equal(Parallelism, succeeded.Count(s => s));
+    }
+
+    /// <summary>
+    /// Kötümser yöntem yalnız kendi satırını kilitlemeli. Parametre tipi sütunla uyuşmazsa (nvarchar
+    /// ile char(43)) SQL Server indeksi kullanamaz, tabloyu tarar ve UPDLOCK taradığı her satırda
+    /// bekler: başka bir teklifin kilidi, ilgisiz bir teklifin kullanımını durdurur.
+    /// </summary>
+    [Fact]
+    public async Task Pessimistic_lock_on_one_offer_does_not_block_another_offer()
+    {
+        var locked = await LoadAsync(await CreateOfferAsync());
+        var otherCode = await CreateOfferAsync();
+
+        // Birinci teklifin satırı açık bir transaction'da UPDLOCK ile tutulur (PK üzerinden seek).
+        await using var holder = new SqlConnection(sql.ConnectionString);
+        await holder.OpenAsync();
+        await using var transaction = (SqlTransaction)await holder.BeginTransactionAsync();
+        await using (var hold = new SqlCommand(
+            "SELECT Id FROM issuer.CredentialOffers WITH (UPDLOCK, ROWLOCK) WHERE Id = @Id", holder, transaction))
+        {
+            hold.Parameters.Add("@Id", SqlDbType.Int).Value = locked.Id;
+            await hold.ExecuteScalarAsync();
+        }
+
+        // İkinci teklif beklemeden kullanılmalı. Tarama olsaydı kilitli satırda takılır, süre dolardı.
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        await using var db = sql.CreateContext();
+        var result = await Create(OfferRedemptionStrategy.Pessimistic, db, new FakeTimeProvider(TestEntities.Now))
+            .RedeemAsync(otherCode, Pin, timeout.Token);
+
+        Assert.Equal(RedeemResult.Success, result?.Result);
     }
 
     private static IOfferRedeemer Create(OfferRedemptionStrategy strategy, IssuerDbContext db, TimeProvider time) =>
