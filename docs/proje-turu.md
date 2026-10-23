@@ -64,7 +64,6 @@ flowchart TB
     db[("SQL Server 2022<br/>tablolar, SP, function, trigger, temporal")]
     issuer --> app
     issuer -- "DI kaydı" --> infra
-    wallet & verifier & worker --> app
     infra --> app
     app --> domain
     app --> crypto
@@ -75,7 +74,8 @@ flowchart TB
     class wallet,verifier,worker,soap,crypto bos
 ```
 
-Wallet, Verifier ve Worker da Infrastructure'a bağlı; şekil sade kalsın diye o oklar çizilmedi.
+Wallet, Verifier ve Worker da Issuer gibi Application ve Infrastructure'a bağlı. Şekil sade kalsın
+diye bu oklar çizilmedi.
 Katmanların görevi ve bağımlılık kuralı [Not 1](gelistirme/01-iskelet-mimari-domain.md)'in
 2. kısmında.
 
@@ -210,6 +210,7 @@ zorunda kaldı (`CONVERT_IMPLICIT`). İndeks kullanılamadı, tablo tarandı. Ta
 **Düzeltme.** Parametre sütunla aynı tipte gönderildi: `SqlParameter(SqlDbType.Char, 43)`.
 
 ```mermaid
+%%{init: {"themeVariables": {"xyChart": {"plotColorPalette": "#dc2626, #16a34a"}}}}%%
 xychart-beta
     title "Kötümser yöntem: işlem/sn (ölçüm)"
     x-axis "İşçi sayısı" [1, 4, 16, 32, 64]
@@ -218,7 +219,7 @@ xychart-beta
     line [131, 533, 1442, 1896, 1850]
 ```
 
-Alttaki çizgi düzeltmeden önce, üstteki sonra. 64 işçide verim 62'den 1.850 işlem/sn'ye çıktı,
+Kırmızı çizgi düzeltmeden önce, yeşil çizgi sonra. 64 işçide verim 62'den 1.850 işlem/sn'ye çıktı,
 p95 gecikme 1.201 ms'den 64 ms'ye indi. `Pessimistic_lock_on_one_offer_does_not_block_another_offer`
 testi eski kodla başarısız, yeni kodla başarılı; hata geri gelirse CI yakalar.
 
@@ -242,13 +243,6 @@ alındı. Tarih: 21.10.2026, commit `e5515b3`.
 | IntegrationTests | `IssuerSmokeTests` | 5 | 5 |
 | IntegrationTests | `IssuerPersistenceTests` | 4 | 4 |
 | **Toplam** | | **69** | **69** |
-
-```mermaid
-pie showData
-    title Test dağılımı (CI, 21.10.2026)
-    "Birim testleri" : 35
-    "Entegrasyon testleri" : 34
-```
 
 Süreler: birim testleri 2,3 sn, entegrasyon testleri 30,2 sn. Entegrasyon süresinin çoğu SQL Server
 konteynerinin açılışıdır.
