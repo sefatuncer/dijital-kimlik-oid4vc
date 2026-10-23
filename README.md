@@ -50,4 +50,5 @@ dotnet test
 | [01](docs/gelistirme/01-iskelet-mimari-domain.md) | Çözüm iskeleti, katmanlı mimari, domain modeli |
 | [02](docs/gelistirme/02-veritabani-ef-core-eszamanlilik.md) | SQL Server, EF Core ve eşzamanlılık |
 | [03](docs/gelistirme/03-programlanabilirlik-sp-function-trigger.md) | Stored procedure, function, trigger, temporal table, veritabanı dağıtımı |
+| [04](docs/gelistirme/04-kripto-sd-jwt.md) | Kripto çekirdeği: JWS, SD-JWT VC, Token Status List |
 | [Ölçüm 1](docs/olcumler/01-eszamanlilik-yontemleri.md) | Dört eşzamanlılık yönteminin yük altında karşılaştırması |
