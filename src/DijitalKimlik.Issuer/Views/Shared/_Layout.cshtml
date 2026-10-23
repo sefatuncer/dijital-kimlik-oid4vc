@@ -1,50 +1,44 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - DijitalKimlik.Issuer</title>
-    <script type="importmap"></script>
+    <title>@ViewData["Title"] · Memur Portalı</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/DijitalKimlik.Issuer.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">DijitalKimlik.Issuer</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
+    <header class="portal-header mb-4">
+        <div class="container d-flex align-items-center justify-content-between py-3">
+            <a class="portal-brand" asp-controller="Home" asp-action="Index">
+                <span class="portal-mark" aria-hidden="true">DG</span>
+                <span>
+                    <strong>Demo Göç Kurumu</strong>
+                    <small class="d-block">Memur Portalı · Kimlik bilgisi düzenleyici</small>
+                </span>
+            </a>
+            <nav class="d-flex gap-3 small">
+                <a asp-controller="Home" asp-action="Index">Panel</a>
+                <a href="~/.well-known/openid-credential-issuer" target="_blank">Metadata</a>
+            </nav>
+        </div>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - DijitalKimlik.Issuer - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <main class="container pb-5">
+        @if (TempData["Message"] is string message)
+        {
+            <div class="alert alert-success">@message</div>
+        }
+        @if (TempData["Error"] is string error)
+        {
+            <div class="alert alert-danger">@error</div>
+        }
+        @RenderBody()
+    </main>
+    <footer class="portal-footer">
+        <div class="container small">
+            Referans uygulama: OpenID4VCI 1.0 · SD-JWT VC · Token Status List. Kayıtlardaki kişiler hayalidir.
         </div>
     </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -1,0 +1,43 @@
+@using DijitalKimlik.Issuer.Oid4Vci
+@model CreatedOffer
+@{
+    ViewData["Title"] = "Teklif oluşturuldu";
+}
+
+<h1 class="h4 mb-3">Kimlik bilgisi teklifi oluşturuldu</h1>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-body">
+                <p class="mb-1 text-secondary">Kişi</p>
+                <p class="fs-5 mb-3">@Model.HolderName · <span class="font-monospace">@Model.PermitNumber</span></p>
+
+                <p class="mb-1 text-secondary">PIN (kişiye sözlü ya da SMS ile söyleyin)</p>
+                <p class="pin mb-3">@Model.TxCode</p>
+
+                <p class="small text-secondary mb-4">
+                    Teklif @Model.ExpiresAt.ToString("HH:mm") UTC'ye kadar geçerli ve tek kullanımlık.
+                    PIN beş kez yanlış girilirse teklif kilitlenir. PIN hiçbir yerde saklanmaz: bu sayfa
+                    kapanınca yeniden gösterilemez.
+                </p>
+
+                <a class="btn btn-primary" href="@Model.WalletLink" target="_blank" rel="noopener">Cüzdanda aç</a>
+                <a class="btn btn-outline-secondary ms-2" asp-controller="Home" asp-action="Index">Panele dön</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-body">
+                <p class="mb-1 text-secondary">Teklif bağlantısı (QR koda bu yazılır)</p>
+                <textarea class="form-control font-monospace small mb-3" rows="4" readonly>@Model.OfferUri</textarea>
+                <p class="mb-1 text-secondary">Teklifin içeriği (credential_offer)</p>
+                <pre class="offer-json">@Model.OfferJson</pre>
+                <p class="small text-secondary mb-0">
+                    Bağlantıda kişisel veri yok: yalnız düzenleyicinin adresi, kimlik bilgisi türü ve tek kullanımlık kod.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

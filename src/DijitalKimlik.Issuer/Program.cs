@@ -1,12 +1,23 @@
 using DijitalKimlik.Application;
 using DijitalKimlik.Infrastructure;
 using DijitalKimlik.Infrastructure.Persistence;
+using DijitalKimlik.Issuer.Oid4Vci;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddApplication();
 builder.Services.AddIssuerInfrastructure(builder.Configuration);
+
+// OpenID4VCI: anahtar ve nonce deposu uygulama boyunca tek örnek; veritabanı kullananlar istek başına.
+builder.Services.Configure<IssuerOptions>(builder.Configuration.GetSection(IssuerOptions.SectionName));
+builder.Services.AddSingleton<IssuerSigningKey>();
+builder.Services.AddSingleton<NonceStore>();
+builder.Services.AddSingleton<AccessTokenService>();
+builder.Services.AddSingleton<ProofValidator>();
+builder.Services.AddScoped<OfferService>();
+builder.Services.AddScoped<CredentialIssuanceService>();
+builder.Services.AddScoped<StatusListService>();
 
 var app = builder.Build();
 
@@ -34,6 +45,8 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+
+app.MapOid4Vci();
 
 app.MapControllerRoute(
     name: "default",

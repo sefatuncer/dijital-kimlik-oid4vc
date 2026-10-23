@@ -83,4 +83,12 @@ public class JwsTests
         Assert.NotEqual(EcJwk.Thumbprint(jwk), EcJwk.Thumbprint(EcJwk.FromPublicKey(other)));
         Assert.Equal(43, EcJwk.Thumbprint(jwk).Length);
     }
+
+    [Fact]
+    public void Serialized_json_keeps_plus_sign_and_turkish_letters_readable()
+    {
+        var json = JoseJson.Serialize(new JsonObject { ["typ"] = "dc+sd-jwt", ["name"] = "İkamet İzni" });
+
+        Assert.Equal("""{"typ":"dc+sd-jwt","name":"İkamet İzni"}""", json);
+    }
 }

@@ -1,31 +1,90 @@
-html {
-  font-size: 14px;
-}
-
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+:root {
+  --portal-primary: #0b3d5c;
+  --portal-accent: #1f7a8c;
 }
 
 html {
-  position: relative;
-  min-height: 100%;
+  font-size: 15px;
 }
 
 body {
-  margin-bottom: 60px;
+  background: #f5f7f9;
+  color: #1d2733;
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+a {
+  color: var(--portal-accent);
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+.btn-primary {
+  background-color: var(--portal-primary);
+  border-color: var(--portal-primary);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: #082c43;
+  border-color: #082c43;
+}
+
+.portal-header {
+  background: var(--portal-primary);
+  color: #fff;
+}
+
+.portal-header a {
+  color: #d8e9f0;
+  text-decoration: none;
+}
+
+.portal-brand {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  color: #fff !important;
+}
+
+.portal-brand small {
+  color: #b9d3df;
+}
+
+.portal-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: .5rem;
+  background: #fff;
+  color: var(--portal-primary);
+  font-weight: 700;
+}
+
+.table {
+  background: #fff;
+}
+
+.card {
+  border-color: #dde3e8;
+}
+
+.pin {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 2.5rem;
+  letter-spacing: .4rem;
+  color: var(--portal-primary);
+}
+
+.offer-json {
+  white-space: pre-wrap;
+  word-break: break-all;
+  background: #f0f3f5;
+  padding: .75rem;
+  border-radius: .375rem;
+  font-size: .8rem;
+}
+
+.portal-footer {
+  border-top: 1px solid #dde3e8;
+  padding: 1rem 0;
+  color: #5b6773;
 }

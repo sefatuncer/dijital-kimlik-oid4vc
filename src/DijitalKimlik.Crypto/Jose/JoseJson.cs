@@ -4,7 +4,6 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Unicode;
 
 namespace DijitalKimlik.Crypto.Jose;
 
@@ -14,10 +13,12 @@ namespace DijitalKimlik.Crypto.Jose;
 /// </summary>
 public static class JoseJson
 {
-    // Türkçe harfler \uXXXX biçimine çevrilmez. HTML'e duyarlı karakterler (<, >, &) yine kaçırılır.
+    // Türkçe harfler ve "dc+sd-jwt"deki "+" \uXXXX biçimine çevrilmez. Varsayılan kodlayıcı bunları,
+    // çıktı bir HTML sayfasına gömülebilir diye kaçırır. Bu çıktı HTML'e gömülmez: base64url'e ya da
+    // application/json yanıtına gider. Ekranda gösterilirse Razor ayrıca HTML kodlaması yapar.
     private static readonly JsonSerializerOptions Options = new()
     {
-        Encoder = JavaScriptEncoder.Create(UnicodeRanges.All),
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
     public static string Serialize(JsonNode node) => node.ToJsonString(Options);

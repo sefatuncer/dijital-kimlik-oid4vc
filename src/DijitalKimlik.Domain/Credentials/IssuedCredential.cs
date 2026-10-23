@@ -102,12 +102,15 @@ public sealed class IssuedCredential : Entity
     /// Status list'e yazılacak değer: 0 geçerli, 1 geçersiz, 2 askıda.
     /// Süresi dolanlar da 1 yazılır; doğrulayıcı ayrıca exp alanına bakar.
     /// </summary>
-    public byte StatusListValue => Status switch
+    public byte StatusListValue => ToStatusListValue(Status);
+
+    /// <summary>Durum listesini veritabanı sorgusundan kuran kod, varlığı yüklemeden bunu kullanır.</summary>
+    public static byte ToStatusListValue(CredentialStatus status) => status switch
     {
         CredentialStatus.Active => 0x00,
         CredentialStatus.Revoked or CredentialStatus.Expired => 0x01,
         CredentialStatus.Suspended => 0x02,
-        _ => throw new InvalidOperationException($"Bilinmeyen durum: {Status}"),
+        _ => throw new InvalidOperationException($"Bilinmeyen durum: {status}"),
     };
 
     public void Suspend(string reason, DateTimeOffset now) => TransitionTo(CredentialStatus.Suspended, now, reason);

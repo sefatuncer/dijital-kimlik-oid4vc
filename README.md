@@ -51,4 +51,5 @@ dotnet test
 | [02](docs/gelistirme/02-veritabani-ef-core-eszamanlilik.md) | SQL Server, EF Core ve eşzamanlılık |
 | [03](docs/gelistirme/03-programlanabilirlik-sp-function-trigger.md) | Stored procedure, function, trigger, temporal table, veritabanı dağıtımı |
 | [04](docs/gelistirme/04-kripto-sd-jwt.md) | Kripto çekirdeği: JWS, SD-JWT VC, Token Status List |
+| [05](docs/gelistirme/05-issuer-oid4vci.md) | Issuer: OpenID4VCI uç noktaları, memur portalı, durum listesi |
 | [Ölçüm 1](docs/olcumler/01-eszamanlilik-yontemleri.md) | Dört eşzamanlılık yönteminin yük altında karşılaştırması |

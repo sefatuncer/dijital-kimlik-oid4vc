@@ -484,6 +484,8 @@ $RECYCLE.BIN/
 # --- Proje özel ---
 # Yerel gizli ayarlar ve üretilen çıktılar depoya girmez
 appsettings.*.local.json
+# Geliştirme imza anahtarları ve cüzdan verisi (uygulamalar ilk açılışta üretir)
+App_Data/
 *.local.env
 publish/
 docs/pdf/

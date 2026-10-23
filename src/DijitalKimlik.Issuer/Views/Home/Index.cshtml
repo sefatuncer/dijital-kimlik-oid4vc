@@ -1,8 +1,119 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@using DijitalKimlik.Domain.Credentials
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Panel";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section class="mb-5">
+    <h1 class="h4 mb-1">İkamet izinleri</h1>
+    <p class="text-secondary mb-3">
+        Kişinin kimliği gişede doğrulandıktan sonra memur teklif oluşturur. Kişi teklifi cüzdanıyla açar
+        ve memurun söylediği PIN'i girer.
+    </p>
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Ad Soyad</th>
+                    <th>Yabancı kimlik no</th>
+                    <th>Uyruk</th>
+                    <th>İzin no</th>
+                    <th>Tür</th>
+                    <th>Geçerlilik</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model.Permits)
+                {
+                    <tr>
+                        <td>@p.HolderName</td>
+                        <td class="font-monospace">@p.MaskedIdentityNumber</td>
+                        <td>@p.Nationality</td>
+                        <td class="font-monospace">@p.PermitNumber</td>
+                        <td>@Labels.Of(p.Type)</td>
+                        <td>@p.ValidFrom.ToString("dd.MM.yyyy") – @p.ValidUntil.ToString("dd.MM.yyyy")</td>
+                        <td class="text-end">
+                            @if (p.IsValid)
+                            {
+                                <form method="post" asp-controller="Offers" asp-action="Create">
+                                    <input type="hidden" name="permitId" value="@p.PermitId" />
+                                    <button type="submit" class="btn btn-primary btn-sm">Teklif oluştur</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="text-secondary small">Geçerli değil</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section>
+    <h2 class="h4 mb-1">Verilen kimlik bilgileri</h2>
+    <p class="text-secondary mb-3">
+        Kurum kimlik bilgisinin kendisini saklamaz; yalnız durumunu ve durum listesindeki sırasını tutar.
+        Askıya alma ya da iptal, doğrulayıcının indirdiği durum listesine yansır.
+    </p>
+    @if (Model.Credentials.Count == 0)
+    {
+        <p class="text-secondary fst-italic">Henüz kimlik bilgisi verilmedi.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Kişi</th>
+                        <th>İzin no</th>
+                        <th>Durum</th>
+                        <th>Liste sırası</th>
+                        <th>Verildi</th>
+                        <th>İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model.Credentials)
+                    {
+                        <tr>
+                            <td>@c.HolderName</td>
+                            <td class="font-monospace">@c.PermitNumber</td>
+                            <td>
+                                <span class="badge @Labels.BadgeClass(c.Status)">@Labels.Of(c.Status)</span>
+                                @if (c.StatusReason is not null)
+                                {
+                                    <div class="small text-secondary">@c.StatusReason</div>
+                                }
+                            </td>
+                            <td class="font-monospace">@c.StatusListIndex</td>
+                            <td>@c.IssuedAt.ToString("dd.MM.yyyy HH:mm") UTC</td>
+                            <td>
+                                @if (c.Status is CredentialStatus.Active or CredentialStatus.Suspended)
+                                {
+                                    <form method="post" action="/credentials/@c.Id/status" class="d-flex gap-2">
+                                        @Html.AntiForgeryToken()
+                                        <input name="reason" class="form-control form-control-sm" placeholder="Gerekçe" maxlength="200" />
+                                        @if (c.Status == CredentialStatus.Active)
+                                        {
+                                            <button name="operation" value="suspend" class="btn btn-outline-warning btn-sm">Askıya al</button>
+                                        }
+                                        else
+                                        {
+                                            <button name="operation" value="reinstate" class="btn btn-outline-success btn-sm">Etkinleştir</button>
+                                        }
+                                        <button name="operation" value="revoke" class="btn btn-outline-danger btn-sm">İptal et</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
