@@ -1,0 +1,59 @@
+@model ConsentViewModel
+@{
+    ViewData["Title"] = "Paylaşım isteği";
+    var credential = Model.Matches.FirstOrDefault();
+    var requested = Model.Request.Credential.Claims;
+}
+
+<h1 class="h5 mb-1">Paylaşım isteği</h1>
+<p class="mb-3">
+    <strong class="font-monospace">@Model.Request.VerifierHost</strong> sizden bilgi istiyor.
+</p>
+<div class="alert alert-warning py-2 small">
+    İstek imzasız: istekte bulunanın kimliği doğrulanmadı, yalnız yanıtın gideceği adres biliniyor.
+</div>
+
+@if (credential is null)
+{
+    <div class="empty">
+        <p class="mb-0">Cüzdanınızda bu isteğe uyan bir kimlik bilgisi yok.</p>
+    </div>
+    <form method="post" action="/authorize/respond" class="mt-3">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="request" value="@Model.RawQuery" />
+        <button name="decision" value="decline" class="btn btn-outline-secondary w-100">Geri dön</button>
+    </form>
+}
+else
+{
+    var claims = credential.Claims();
+    <p class="small text-secondary mb-1">Kaynak: @credential.DisplayName · @credential.IssuerName</p>
+
+    <div class="share-box share-yes mb-3">
+        <div class="share-title">Paylaşılacak (@requested.Count)</div>
+        @if (requested.Count == 0)
+        {
+            <p class="small mb-0">Hiçbir alan açılmaz; yalnız kimlik bilgisinin geçerli olduğu kanıtlanır.</p>
+        }
+        <dl class="share-list">
+            @foreach (var name in requested)
+            {
+                <dt>@credential.LabelOf(name)</dt>
+                <dd>@claims.First(c => c.Name == name).Value</dd>
+            }
+        </dl>
+    </div>
+
+    <div class="share-box share-no mb-3">
+        <div class="share-title">Paylaşılmayacak (@(claims.Count - requested.Count))</div>
+        <p class="small mb-0">@string.Join(", ", claims.Where(c => !requested.Contains(c.Name)).Select(c => c.Label))</p>
+    </div>
+
+    <form method="post" action="/authorize/respond">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="request" value="@Model.RawQuery" />
+        <input type="hidden" name="credentialId" value="@credential.Id" />
+        <button name="decision" value="share" class="btn btn-primary w-100 mb-2">Paylaş</button>
+        <button name="decision" value="decline" class="btn btn-outline-secondary w-100">Reddet</button>
+    </form>
+}

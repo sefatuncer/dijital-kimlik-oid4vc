@@ -88,3 +88,9 @@ a {
   padding: 1rem 0;
   color: #5b6773;
 }
+
+.offer-qr {
+  width: 180px;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}

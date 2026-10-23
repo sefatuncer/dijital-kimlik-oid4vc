@@ -2,34 +2,26 @@
 
 | | |
 |---|---|
-| Durum tarihi | 23.10.2026 |
-| Commit | `e5515b3` (`main`) |
-| Testler | 69 test (35 birim, 34 entegrasyon), hepsi geçiyor |
-| CI | 21 çalışma: 20 başarılı, 1 iptal (aynı dala yeni push gelince eskisi durduruldu) |
+| Durum tarihi | 24.10.2026 |
+| Testler | 119 test (75 birim, 44 entegrasyon), hepsi geçiyor |
+| Çalışan akış | Kimlik bilgisi verme (OpenID4VCI) → web cüzdanı → seçerek paylaşma ve doğrulama (OpenID4VP) → iptal |
 
-Bu sayfa projenin bugün nerede olduğunu aşama aşama gösterir. Her aşamada ne yapıldığı, nasıl
-doğrulandığı ve kanıtı yer alır. Kanıt CI çıktısı, test sonucu ya da ölçümdür. Ayrıntılar her
-aşamanın geliştirme notundadır.
-
-> [!NOTE]
-> Issuer, Wallet ve Verifier uygulamaları bugün ASP.NET Core MVC'nin şablon sayfasıyla açılıyor.
-> Kimlik bilgisini veren (OpenID4VCI) ve doğrulayan (OpenID4VP) uç noktalar henüz yazılmadı. Bu
-> yüzden bu sayfada arayüz görüntüsü yok. Akış çalışınca ekran görüntüleri ve uçtan uca akışı
-> gösteren kısa bir animasyon (GIF) eklenecek.
+Bu sayfa projenin bugün nerede olduğunu gösterir. Önce çalışan uygulama, sonra her aşamada ne
+yapıldığı, nasıl doğrulandığı ve kanıtı gelir. Ayrıntılar her aşamanın geliştirme notundadır.
 
 ## 1. Kısaca durum
 
 | Faz | Konu | Durum | Kanıt |
 |---|---|---|---|
 | 0 | Geliştirme ortamı, Git, GitHub güvenlik ayarları | Bitti | [Not 0](gelistirme/00-ortam-git-github.md) |
-| 1 | Çözüm iskeleti, katmanlı mimari, domain modeli, CI | Bitti | 35 birim testi, [Not 1](gelistirme/01-iskelet-mimari-domain.md) |
-| 2 | SQL Server, EF Core, üç eşzamanlılık yöntemi | Bitti | Gerçek SQL Server'la entegrasyon testleri, [Not 2](gelistirme/02-veritabani-ef-core-eszamanlilik.md) |
+| 1 | Çözüm iskeleti, katmanlı mimari, domain modeli, CI | Bitti | [Not 1](gelistirme/01-iskelet-mimari-domain.md) |
+| 2 | SQL Server, EF Core, üç eşzamanlılık yöntemi | Bitti | [Not 2](gelistirme/02-veritabani-ef-core-eszamanlilik.md) |
 | 3 | Stored procedure, function, trigger, temporal table, veritabanı dağıtımı | Bitti | CI'da dağıtım provası, [Not 3](gelistirme/03-programlanabilirlik-sp-function-trigger.md) |
 | 3b | Dört yöntemin yük altında ölçümü | Bitti | [Ölçüm 1](olcumler/01-eszamanlilik-yontemleri.md) |
-| 4–8 | Kripto çekirdeği (SD-JWT VC), OpenID4VCI, memur portalı, web cüzdanı, OpenID4VP | Sırada | — |
-| 9+ | SOAP servisi, Windows servisi, güvenlik, Redis, izleme, gateway, yük testi, yayın | Planlı | — |
-
-Aşağıdaki zaman çizelgesi commit tarihlerinden çıkarıldı:
+| 4 | Kripto çekirdeği: JWS, SD-JWT VC, Token Status List | Bitti | 39 birim testi, [Not 4](gelistirme/04-kripto-sd-jwt.md) |
+| 5–6 | OpenID4VCI uç noktaları ve memur portalı | Bitti | [Not 5](gelistirme/05-issuer-oid4vci.md) |
+| 7–8 | Web cüzdanı ve OpenID4VP doğrulayıcı | Bitti | Uçtan uca testler, ekran görüntüleri, [Not 7](gelistirme/07-cuzdan-dogrulayici.md) |
+| 9+ | ADO.NET, SOAP servisi, Windows servisi, güvenlik, Redis, izleme, gateway, yük testi, yayın | Planlı | — |
 
 ```mermaid
 timeline
@@ -38,29 +30,145 @@ timeline
             : Faz 1 - çözüm iskeleti, domain modeli, ilk CI
     21 Ekim : Faz 2 - SQL Server, EF Core, üç eşzamanlılık yöntemi
             : Faz 3 - SP, function, trigger, temporal table
-            : CI'da veritabanı dağıtım provası
             : Faz 3b - ölçüm ve kötümser yöntem düzeltmesi
-            : Geliştirme notlarının sadeleştirilmesi
+    23 Ekim : Faz 4 - SD-JWT VC ve durum listesi
+            : Faz 5-6 - OpenID4VCI ve memur portalı
+    24 Ekim : Faz 7-8 - web cüzdanı ve OpenID4VP doğrulayıcı
 ```
 
-## 2. Mimari: bugün ne var?
+## 2. Çalışan uygulama
+
+Üç ayrı web uygulaması birbirleriyle yalnız standart protokollerle konuşur:
+
+| Uygulama | Adres | Kim kullanır? |
+|---|---|---|
+| Issuer (düzenleyici) | `localhost:5101` | Memur: teklif oluşturur, kimlik bilgisini askıya alır ya da iptal eder |
+| Wallet (cüzdan) | `localhost:5201` | Kişi: kimlik bilgisini alır, saklar, neyi paylaşacağına karar verir |
+| Verifier (doğrulayıcı) | `localhost:5301` | Otel, mağaza: yalnız gereken alanları ister ve doğrular |
+
+Aşağıdaki animasyon akışın tamamını 12 karede gösterir. Görüntüler uygulamanın kendisinden,
+headless Edge ile otomatik alındı. Kişiler hayalidir.
+
+![Uçtan uca akış: teklif, PIN, cüzdan, otel kaydı, yaş kontrolü, iptal](gorseller/akis/akis.gif)
+
+### Adım 1: Memur teklif oluşturur
+
+Kişinin kimliği gişede doğrulanmıştır. Memur **Teklif oluştur**'a basar. Ekranda QR kod ve 6
+haneli PIN çıkar. PIN kişiye sözlü ya da SMS ile söylenir: bağlantıyı ele geçiren biri PIN'siz
+kimlik bilgisini alamaz. Panelde kimlik numarası maskelidir.
+
+<table>
+<tr>
+<td width="50%"><img src="gorseller/akis/01-memur-paneli.png" alt="Memur paneli: ikamet izinleri listesi"></td>
+<td width="50%"><img src="gorseller/akis/02-memur-teklif-pin.png" alt="Teklif: QR kod ve PIN"></td>
+</tr>
+<tr>
+<td>Memur paneli: ikamet izinleri ve verilen kimlik bilgileri</td>
+<td>Teklif: QR kod, tek kullanımlık PIN ve teklifin içeriği</td>
+</tr>
+</table>
+
+### Adım 2: Cüzdan kimlik bilgisini alır
+
+Cüzdan teklifi açar, düzenleyicinin metadata'sını indirir ve PIN'i ister. Sonra OpenID4VCI uç
+noktalarını sırayla çağırır: token, nonce, credential. Kimlik bilgisi bu cüzdanda üretilen yeni bir
+anahtara bağlanır. Cüzdan imzayı, düzenleyiciyi ve anahtar bağlamasını doğrulamadan saklamaz.
+
+<table>
+<tr>
+<td width="50%"><img src="gorseller/akis/03-cuzdan-teklif-pin.png" alt="Cüzdan: teklif ve PIN girişi"></td>
+<td width="50%"><img src="gorseller/akis/04-cuzdan-kimlik-bilgisi.png" alt="Cüzdan: ikamet izni kartı"></td>
+</tr>
+<tr>
+<td>Cüzdan teklifi gösterir, kişi PIN'i girer</td>
+<td>İkamet izni cüzdanda: 10 alan, hepsi seçerek açılabilir</td>
+</tr>
+</table>
+
+### Adım 3: Otel kaydı, yalnız 5 alan
+
+Otel resepsiyonu ad, soyad, uyruk, kimlik numarası ve iznin bitiş tarihini ister. Kişi cüzdanda
+neyin gideceğini ve neyin kalacağını görür. Doğum tarihi, izin numarası, izin türü, başlangıç
+tarihi ve yaş bilgisi cüzdandan çıkmaz.
+
+<table>
+<tr>
+<td width="50%"><img src="gorseller/akis/05-dogrulayici-senaryolar.png" alt="Doğrulayıcı: senaryolar"></td>
+<td width="50%"><img src="gorseller/akis/06-dogrulayici-istek-qr.png" alt="Doğrulayıcı: QR kodlu istek"></td>
+</tr>
+<tr>
+<td>Doğrulayıcı: her senaryo yalnız işin gerektirdiği alanları ister</td>
+<td>İstek: telefon için QR kod ya da aynı cihazdaki cüzdan için bağlantı</td>
+</tr>
+<tr>
+<td width="50%"><img src="gorseller/akis/07-cuzdan-onay-otel.png" alt="Cüzdan: paylaşım onayı"></td>
+<td width="50%"><img src="gorseller/akis/08-dogrulama-otel.png" alt="Doğrulayıcı: Doğrulandı"></td>
+</tr>
+<tr>
+<td>Onay ekranı: 5 alan paylaşılacak, 5 alan paylaşılmayacak</td>
+<td>Sekiz denetimin hepsi geçti; doğrulayıcı yalnız 5 alanı görüyor</td>
+</tr>
+</table>
+
+Doğrulayıcının sekiz denetimi: yanıt biçimi, güvenilir düzenleyici, imza ve özetler, cüzdan
+bağlama (KB-JWT), geçerlilik süresi, kimlik bilgisi türü, istenen alanlar ve iptal durumu.
+Sırası ve ayrıntısı [Not 7](gelistirme/07-cuzdan-dogrulayici.md)'nin 3. kısmında.
+
+### Adım 4: Yaş kontrolü, tek bir evet/hayır
+
+Bir mağaza yalnız "18 yaşından büyük mü?" sorusunu sorar. Ad, doğum tarihi ve kimlik numarası
+gitmez. Bu alan (`age_over_18`) kimlik bilgisi verilirken düzenleyicinin hesapladığı türetilmiş
+bir alandır.
+
+<table>
+<tr>
+<td width="50%"><img src="gorseller/akis/09-cuzdan-onay-yas.png" alt="Cüzdan: yaş kontrolü onayı"></td>
+<td width="50%"><img src="gorseller/akis/10-dogrulama-yas.png" alt="Doğrulayıcı: yaş doğrulandı"></td>
+</tr>
+<tr>
+<td>Yalnız "18 yaşından büyük" paylaşılacak</td>
+<td>Doğrulandı: doğrulayıcı tek bir alan görüyor</td>
+</tr>
+</table>
+
+### Adım 5: Memur iptal eder, doğrulama düşer
+
+Memur kimlik bilgisini iptal eder. Düzenleyici bunu durum listesine (status list) yazar. Aynı
+kimlik bilgisi aynı otele yeniden sunulunca imza, süre ve öteki denetimler yine geçer, ama iptal
+denetimi düşer. Doğrulayıcı hiçbir alanı göstermez.
+
+<table>
+<tr>
+<td width="50%"><img src="gorseller/akis/11-memur-iptal.png" alt="Memur paneli: kimlik bilgisi iptal edildi"></td>
+<td width="50%"><img src="gorseller/akis/12-dogrulama-iptal-sonrasi.png" alt="Doğrulayıcı: Doğrulanamadı"></td>
+</tr>
+<tr>
+<td>Kimlik bilgisi iptal edildi</td>
+<td>Doğrulanamadı: durum listesinde "iptal"</td>
+</tr>
+</table>
+
+Aynı akış CI'da da koşar: `EndToEndFlowTests` üç uygulamayı gerçek SQL Server'la açar ve bu beş
+adımı HTTP üzerinden yürütür. Kendi makinende denemek için: [12. kısım](#12-kendin-dene).
+
+## 3. Mimari
 
 Her kutu bir projedir, her ok "şuna bağımlı" demektir. Yeşil kutularda çalışan ve test edilen kod
-var. Gri kutular şimdilik şablon ya da boş proje.
+var. Gri kutular şimdilik şablon.
 
 ```mermaid
 flowchart TB
     subgraph sunum["Sunum katmanı"]
-        issuer["Issuer<br/>MVC, DI kurulumu, demo verisi"]
-        wallet["Wallet<br/>şablon"]
-        verifier["Verifier<br/>şablon"]
+        issuer["Issuer<br/>OpenID4VCI, memur portalı, durum listesi"]
+        wallet["Wallet<br/>web cüzdanı"]
+        verifier["Verifier<br/>OpenID4VP, doğrulama"]
         worker["Worker<br/>şablon"]
         soap["LegacySoap<br/>şablon"]
     end
     app["Application<br/>use-case, Result, arayüzler"]
     infra["Infrastructure<br/>EF Core, migration'lar, 4 teklif yöntemi"]
     domain["Domain<br/>yabancı, ikamet izni, teklif, kimlik bilgisi"]
-    crypto["Crypto<br/>boş, SD-JWT VC Faz 4'te"]
+    crypto["Crypto<br/>JWS, SD-JWT VC, status list"]
     db[("SQL Server 2022<br/>tablolar, SP, function, trigger, temporal")]
     issuer --> app
     issuer -- "DI kaydı" --> infra
@@ -68,18 +176,22 @@ flowchart TB
     app --> domain
     app --> crypto
     infra --> db
+    wallet --> crypto
+    verifier --> crypto
+    wallet -. "OpenID4VCI (HTTP)" .-> issuer
+    verifier -. "JWKS, durum listesi (HTTP)" .-> issuer
+    wallet -. "OpenID4VP direct_post (HTTP)" .-> verifier
     classDef var fill:#dcfce7,stroke:#15803d,color:#14532d
     classDef bos fill:#f3f4f6,stroke:#9ca3af,color:#374151,stroke-dasharray: 4 3
-    class issuer,app,infra,domain,db var
-    class wallet,verifier,worker,soap,crypto bos
+    class issuer,wallet,verifier,app,infra,domain,crypto,db var
+    class worker,soap bos
 ```
 
-Wallet, Verifier ve Worker da Issuer gibi Application ve Infrastructure'a bağlı. Şekil sade kalsın
-diye bu oklar çizilmedi.
-Katmanların görevi ve bağımlılık kuralı [Not 1](gelistirme/01-iskelet-mimari-domain.md)'in
-2. kısmında.
+Kesikli oklar uygulamalar arasındaki HTTP çağrılarıdır. Wallet ve Verifier veritabanına
+dokunmaz; yalnız Crypto'ya bağlıdır. Böylece cüzdan ve doğrulayıcı başka bir kurumun sunucusunda
+da çalışabilir. Katmanların görevi [Not 1](gelistirme/01-iskelet-mimari-domain.md)'in 2. kısmında.
 
-## 3. Faz 0: ortam ve depo
+## 4. Faz 0: ortam ve depo
 
 Amaç: herkesin aynı SDK sürümüyle derlediği, sırların ve kişisel bilgilerin depoya sızmadığı bir
 başlangıç.
@@ -96,7 +208,7 @@ başlangıç.
 
 Ayrıntı: [Not 0](gelistirme/00-ortam-git-github.md).
 
-## 4. Faz 1: iskelet, domain modeli ve CI
+## 5. Faz 1: iskelet, domain modeli ve CI
 
 Amaç: iş kurallarının veritabanından ve arayüzden bağımsız yazıldığı, her değişikliğin otomatik
 denetlendiği bir iskelet.
@@ -121,12 +233,9 @@ denetlendiği bir iskelet.
 - **Dal koruması:** `main`'e yalnız "Derleme ve test" işi geçmiş commit gelebilir. Zorla push ve
   dal silme kapalı. Kural yöneticilere de uygulanır.
 
-Son CI çalışmasında (21.10.2026) iki iş paralel koştu: "Derleme ve test" 1 dk 24 sn,
-"Veritabanı dağıtım provası" 1 dk 21 sn. Toplam süre 1 dk 31 sn.
-
 Ayrıntı: [Not 1](gelistirme/01-iskelet-mimari-domain.md).
 
-## 5. Faz 2: veritabanı ve eşzamanlılık
+## 6. Faz 2: veritabanı ve eşzamanlılık
 
 Amaç: verinin SQL Server'a EF Core ile yazılması ve gerçek bir yarış durumunun doğru çözülmesi.
 
@@ -156,7 +265,7 @@ Bir test de sorunun gerçek olduğunu gösterir: naif kod aynı teklifi birçok 
 
 Ayrıntı: [Not 2](gelistirme/02-veritabani-ef-core-eszamanlilik.md).
 
-## 6. Faz 3: veritabanı nesneleri ve dağıtım
+## 7. Faz 3: veritabanı nesneleri ve dağıtım
 
 Amaç: iş kuralının bir kısmını veritabanında çalıştırmak ve şemayı canlıya güvenle taşımak.
 
@@ -171,7 +280,7 @@ Amaç: iş kuralının bir kısmını veritabanında çalıştırmak ve şemayı
 **Dağıtım provası.** Canlıda migration'ı uygulama açılışta değil, kurulum adımı uygular. CI'daki
 ikinci iş iki yolu da dener: DBA'ya verilecek idempotent SQL betiği ve tek dosyalık migration
 bundle. İkisi de boş bir veritabanına **iki kez** uygulanır. İkinci çalıştırma hata vermemeli ve
-hiçbir şeyi değiştirmemelidir. Son çalışmanın günlüğünden:
+hiçbir şeyi değiştirmemelidir. Bir çalışmanın günlüğünden:
 
 ```text
 Çalıştırma 1
@@ -186,17 +295,13 @@ DkBetik: migration,nesne,temporal = 3,4,1
 DkBundle: migration,nesne,temporal = 3,4,1
 ```
 
-Son iki satırda her iki veritabanı aynı sonucu veriyor:
-
-- 3 migration;
-- 4 programlanabilir nesne: iki function, bir stored procedure, bir trigger;
-- 1 temporal tablo.
-
-Sonuç beklenenden farklı olsaydı iş başarısız olurdu.
+Son iki satırda iki veritabanı aynı sonucu veriyor: 3 migration; 4 programlanabilir nesne (iki
+function, bir stored procedure, bir trigger); 1 temporal tablo. Sonuç beklenenden farklı olsaydı
+iş başarısız olurdu.
 
 Ayrıntı: [Not 3](gelistirme/03-programlanabilirlik-sp-function-trigger.md).
 
-## 7. Faz 3b: yük altında ölçüm
+## 8. Faz 3b: yük altında ölçüm
 
 Amaç: dört yöntemin çekişme ve verim altında nasıl davrandığını sayıyla görmek.
 
@@ -224,55 +329,44 @@ testi eski kodla başarısız, yeni kodla başarılı; hata geri gelirse CI yaka
 Ölçüm yöntemi, ortam, ham veri (CSV) ve öteki grafikler:
 [Ölçüm 1](olcumler/01-eszamanlilik-yontemleri.md).
 
-## 8. Testler ve CI sonuçları
+## 9. Faz 4–8: kimlik bilgisi verme, saklama ve doğrulama
 
-Sayılar son CI çalışmasının test sonuçlarından (`test-sonuclari` artifact'ındaki TRX dosyaları)
-alındı. Tarih: 21.10.2026, commit `e5515b3`.
+| Faz | Ne yapıldı? | Öne çıkan karar |
+|---|---|---|
+| 4 | `DijitalKimlik.Crypto`: ES256 JWS, SD-JWT (RFC 9901) üretme, sunma ve doğrulama, KB-JWT, 2 bitlik sıkıştırılmış durum listesi | Dış paket yok; yalnız .NET'in kendi kripto ve sıkıştırma API'leri. Standardın test vektörleriyle denendi |
+| 5–6 | Issuer: metadata, `/token` (pre-authorized code + PIN), `/nonce`, `/credential`, `/status-lists/{id}`; memur paneli, teklif, askıya alma ve iptal | Kod ve PIN yalnız özet olarak saklanır; teklif Faz 2'deki eşzamanlılık güvenli yöntemle bir kez kullanılır |
+| 7 | Wallet: teklifi açma, PIN, kimlik bilgisini alma ve doğrulama, şifreli saklama, onay ekranı | Her kimlik bilgisi için yeni anahtar: iki doğrulayıcı kişiyi ilişkilendiremez |
+| 8 | Verifier: DCQL ile istek, QR kod, `direct_post` yanıtı, sekiz denetim, sonuç sayfası | İstek imzasız (`redirect_uri:`), yanıt yalnız istekteki adrese gider; üretimde imzalı istek gerekir |
 
-| Proje | Test sınıfı | Test | Geçen |
-|---|---|---:|---:|
-| UnitTests | `ForeignerIdentityNumberTests` | 14 | 14 |
-| UnitTests | `ForeignerTests` | 6 | 6 |
-| UnitTests | `IssuedCredentialTests` | 6 | 6 |
-| UnitTests | `ForeignerServiceTests` | 5 | 5 |
-| UnitTests | `CredentialOfferTests` | 4 | 4 |
-| IntegrationTests | `OfferRedemptionConcurrencyTests` | 18 | 18 |
-| IntegrationTests | `ProgrammabilityTests` | 7 | 7 |
-| IntegrationTests | `IssuerSmokeTests` | 5 | 5 |
-| IntegrationTests | `IssuerPersistenceTests` | 4 | 4 |
-| **Toplam** | | **69** | **69** |
+Ayrıntı: [Not 4](gelistirme/04-kripto-sd-jwt.md), [Not 5](gelistirme/05-issuer-oid4vci.md),
+[Not 7](gelistirme/07-cuzdan-dogrulayici.md).
 
-Süreler: birim testleri 2,3 sn, entegrasyon testleri 30,2 sn. Entegrasyon süresinin çoğu SQL Server
-konteynerinin açılışıdır.
+## 10. Testler
 
-Kod kapsamı (satır ve dal oranı). İki test projesinin raporu ayrıdır, birleştirilmedi. Crypto
-projesinde henüz kod yok.
+| Proje | Test | Kapsam | Süre |
+|---|---:|---|---:|
+| UnitTests | 75 | Domain, Application, Crypto (SD-JWT, JWS, durum listesi) | 67 ms |
+| IntegrationTests | 44 | Gerçek SQL Server: eşzamanlılık, veritabanı nesneleri, Issuer, OpenID4VCI akışı, uçtan uca akış | 4 sn |
+| **Toplam** | **119** | | |
 
-| Proje | Satır | Dal | Ölçen testler |
-|---|---:|---:|---|
-| Domain | %81,0 | %77,9 | Birim |
-| Application | %77,0 | %66,7 | Birim |
-| Infrastructure | %97,6 | %85,7 | Entegrasyon |
-| Issuer | %67,6 | %76,5 | Entegrasyon |
+Sayılar 24.10.2026'da Linux SDK konteynerinde alındı (Docker soketi bağlı, SQL Server
+Testcontainers ile). Süreler derleme ve konteyner açılışı hariç test koşusudur. CI her PR'da aynı
+testleri koşar; TRX ve kod kapsamı raporları çalışmanın `test-sonuclari` artifact'ındadır.
 
 Faz 2'den bu yana her faz bir dalda geliştirildi, PR'da CI'dan geçti, sonra `main`'e alındı.
 Bütün çalışmalar deponun Actions sekmesinde.
 
-## 9. Sıradaki fazlar
+## 11. Sıradaki fazlar
 
 | Faz | Konu |
 |---|---|
-| 4 | Kripto çekirdeği: SD-JWT VC (RFC 9901) üretme ve doğrulama, anahtar yönetimi |
-| 5 | OpenID4VCI Issuer API: credential offer, token (pre-authorized code ve PIN), credential uç noktası |
-| 6 | Memur portalı: yabancı kaydı, ikamet izni, teklif oluşturma |
-| 7 | Web cüzdanı: kimlik bilgisini alma, saklama, gösterme |
-| 8 | OpenID4VP Verifier: yalnız gereken alanları isteme ve doğrulama, iptal listesi denetimi |
-| 9 ve sonrası | ADO.NET ile toplu işlemler, SOAP servisi (CoreWCF), Windows servisi, güvenlik denetimleri, Redis, loglama ve izleme, YARP gateway, k6 ile yük testi, CI/CD ile yayın |
+| 9 | ADO.NET ile toplu işlemler |
+| 10 ve sonrası | SOAP servisi (CoreWCF), Windows servisi (süre dolumu, durum listesi), güvenlik denetimleri ve memur girişi, Redis, loglama ve izleme, YARP gateway, k6 ile yük testi, CI/CD ile yayın |
 
 Her faz aynı akışla ilerler: dal, kod ve test, PR, CI, `main`. Her fazın sonunda
 `docs/gelistirme/` altına bir geliştirme notu eklenir.
 
-## 10. Kendin dene
+## 12. Kendin dene
 
 Gereken: .NET SDK 10.0.402 ve Docker. Entegrasyon testleri Docker'da SQL Server konteyneri açar.
 
@@ -281,21 +375,33 @@ git clone https://github.com/sefatuncer/dijital-kimlik-oid4vc
 cd dijital-kimlik-oid4vc
 . .\scripts\ortam.ps1    # SDK kullanıcı klasörüne kuruluysa oturumda etkinleştirir
 dotnet build
-dotnet test
+dotnet test               # beklenen: 119 testin hepsi geçer
 ```
 
-Beklenen sonuç: 69 testin hepsi geçer. Geliştirme veritabanının kurulumu
-[Not 2](gelistirme/02-veritabani-ef-core-eszamanlilik.md)'nin 2. kısmında.
+Uygulamayı tarayıcıda görmek için önce geliştirme veritabanını kur
+([Not 2](gelistirme/02-veritabani-ef-core-eszamanlilik.md), 2. kısım), sonra üç uygulamayı üç
+ayrı terminalde başlat:
 
-## 11. Bu sayfadaki sayılar nereden geldi?
+```powershell
+dotnet run --project src/DijitalKimlik.Issuer     # http://localhost:5101
+dotnet run --project src/DijitalKimlik.Wallet     # http://localhost:5201
+dotnet run --project src/DijitalKimlik.Verifier   # http://localhost:5301
+```
+
+Akış: Issuer'da **Teklif oluştur** → **Cüzdanda aç** → PIN → Verifier'da bir senaryo →
+**Cüzdanla paylaş** → **Paylaş**. Ayrıntılı adımlar [Not 7](gelistirme/07-cuzdan-dogrulayici.md)'nin
+7. kısmında.
+
+## 13. Bu sayfadaki sayılar ve görseller nereden geldi?
 
 | İçerik | Kaynak |
 |---|---|
-| Test sayıları, süreler, kod kapsamı | CI çalışması #15'in `test-sonuclari` artifact'ı (TRX ve Cobertura dosyaları) |
-| Dağıtım provası çıktısı | Aynı çalışmanın "Veritabanı dağıtım provası" işinin günlüğü |
+| Ekran görüntüleri ve animasyon | Geliştirme ortamında üç uygulama; headless Edge'i Chrome DevTools Protocol ile süren bir betik. PNG'lerin meta verisi silindi |
+| Test sayıları ve süreler | 24.10.2026, Linux SDK konteynerinde `dotnet test` çıktısı |
+| Dağıtım provası çıktısı | CI'daki "Veritabanı dağıtım provası" işinin günlüğü |
 | Ölçüm grafiği | `docs/olcumler/veri/` altındaki ham CSV dosyaları |
 
-## 12. Terimler
+## 14. Terimler
 
 | Terim | Ne demek? |
 |---|---|
@@ -313,3 +419,6 @@ Beklenen sonuç: 69 testin hepsi geçer. Geliştirme veritabanının kurulumu
 | p95 gecikme | İsteklerin %95'inin bu süreden kısa sürdüğü değer |
 | SD-JWT VC | Sahibinin alanları tek tek gösterebildiği, imzalı dijital kimlik bilgisi biçimi |
 | OpenID4VCI / OpenID4VP | Kimlik bilgisini cüzdana verme / cüzdandan isteyip doğrulama protokolleri |
+| KB-JWT | Cüzdanın kendi anahtarıyla imzaladığı kısa JWT: sunumun bu isteğe ve bu cüzdana ait olduğunu gösterir |
+| Durum listesi (status list) | Düzenleyicinin, her kimlik bilgisi için geçerli/iptal/askıda bilgisini tuttuğu imzalı liste |
+| DCQL | Doğrulayıcının hangi kimlik bilgisinden hangi alanları istediğini yazdığı JSON sorgu |

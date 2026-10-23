@@ -1,0 +1,8 @@
+@model string
+@{
+    ViewData["Title"] = "İşlem tamamlanamadı";
+}
+
+<h1 class="h5 mb-3">İşlem tamamlanamadı</h1>
+<div class="alert alert-danger">@Model</div>
+<a class="btn btn-outline-secondary w-100" asp-controller="Home" asp-action="Index">Cüzdana dön</a>

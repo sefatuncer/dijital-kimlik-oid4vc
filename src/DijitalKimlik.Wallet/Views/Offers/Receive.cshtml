@@ -1,0 +1,40 @@
+@model ReceiveViewModel
+@{
+    ViewData["Title"] = "Yeni kimlik bilgisi";
+    var p = Model.Preview;
+}
+
+<h1 class="h5 mb-3">Yeni kimlik bilgisi teklifi</h1>
+
+<article class="credential mb-3" style="--card-bg: @p.BackgroundColor; --card-fg: @p.TextColor">
+    <div class="credential-head">
+        <div>
+            <div class="credential-name">@p.DisplayName</div>
+            <div class="credential-issuer">@p.IssuerName</div>
+        </div>
+        <span class="credential-chip">Teklif</span>
+    </div>
+    <p class="small mb-0 opacity-75">İçerdiği alanlar: @string.Join(", ", p.ClaimLabels)</p>
+</article>
+
+<p class="small text-secondary">
+    Düzenleyici: <span class="font-monospace">@p.Issuer</span> (cüzdanın güvendiği düzenleyiciler listesinde).
+</p>
+
+@if (Model.Error is not null)
+{
+    <div class="alert alert-danger py-2">@Model.Error</div>
+}
+
+<form method="post" action="/offers/accept">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="offer" value="@Model.OfferJson" />
+    @if (p.TxCodeLength is not null)
+    {
+        <label class="form-label" for="txCode">@(p.TxCodeDescription ?? "PIN")</label>
+        <input id="txCode" name="txCode" class="form-control form-control-lg pin-input mb-3" inputmode="numeric"
+               autocomplete="one-time-code" maxlength="@p.TxCodeLength" minlength="@p.TxCodeLength" required autofocus />
+    }
+    <button type="submit" class="btn btn-primary w-100">Kabul et ve cüzdana ekle</button>
+</form>
+<a class="btn btn-link w-100 mt-2" asp-controller="Home" asp-action="Index">Vazgeç</a>

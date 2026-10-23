@@ -1,21 +1,28 @@
 using System.Diagnostics;
 
+using DijitalKimlik.Wallet.Credentials;
 using DijitalKimlik.Wallet.Models;
 
 using Microsoft.AspNetCore.Mvc;
 
 namespace DijitalKimlik.Wallet.Controllers;
 
-public class HomeController : Controller
+/// <summary>Cüzdanın ana ekranı: kimlik bilgilerim.</summary>
+public class HomeController(WalletStore store) : Controller
 {
     public IActionResult Index()
     {
-        return View();
+        var walletId = WalletSession.GetOrCreateWalletId(HttpContext);
+        return View(store.List(walletId));
     }
 
-    public IActionResult Privacy()
+    [HttpPost("/credentials/{id}/delete")]
+    [ValidateAntiForgeryToken]
+    public IActionResult Delete(string id)
     {
-        return View();
+        var walletId = WalletSession.GetOrCreateWalletId(HttpContext);
+        TempData["Message"] = store.Remove(walletId, id) ? "Kimlik bilgisi cüzdandan silindi." : "Kimlik bilgisi bulunamadı.";
+        return RedirectToAction(nameof(Index));
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

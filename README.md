@@ -2,14 +2,17 @@
 
 [![CI](https://github.com/sefatuncer/dijital-kimlik-oid4vc/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sefatuncer/dijital-kimlik-oid4vc/actions/workflows/ci.yml)
 
-**Proje nerede?** Bitmiş fazlar, test ve CI sonuçları, ölçümler ve sıradaki işler:
-[Proje turu](docs/proje-turu.md).
-
 Bu depo, .NET 10 ile yazılmış bir **referans uygulama**. Hayali bir "Demo Göç Kurumu",
 yabancılara dijital ikamet izni kimlik bilgisi (SD-JWT VC) veriyor. Yabancı bu bilgiyi web
 cüzdanında saklıyor. Doğrulayıcı kurumlar yalnız ihtiyaç duydukları alanları istiyor ve doğruluyor.
 
 > Gerçek bir kurumla ilişkisi yoktur. Kurum adı, kişi verileri ve anahtarlar hayalidir.
+
+![Uçtan uca akış: memur teklif oluşturur, cüzdan kimlik bilgisini alır, otel 5 alanı, mağaza yalnız yaşı doğrular, iptalden sonra doğrulama düşer](docs/gorseller/akis/akis.gif)
+
+Memur teklif oluşturur → cüzdan PIN'le kimlik bilgisini alır → otel yalnız 5 alanı, mağaza yalnız
+"18 yaşından büyük" bilgisini doğrular → memur iptal edince aynı kimlik bilgisi doğrulanmaz.
+Adım adım ekran görüntüleri, bitmiş fazlar, testler ve ölçümler: [Proje turu](docs/proje-turu.md).
 
 ## Bileşenler
 
@@ -52,4 +55,5 @@ dotnet test
 | [03](docs/gelistirme/03-programlanabilirlik-sp-function-trigger.md) | Stored procedure, function, trigger, temporal table, veritabanı dağıtımı |
 | [04](docs/gelistirme/04-kripto-sd-jwt.md) | Kripto çekirdeği: JWS, SD-JWT VC, Token Status List |
 | [05](docs/gelistirme/05-issuer-oid4vci.md) | Issuer: OpenID4VCI uç noktaları, memur portalı, durum listesi |
+| [07](docs/gelistirme/07-cuzdan-dogrulayici.md) | Web cüzdanı ve OpenID4VP doğrulayıcı: seçerek paylaşma, sekiz denetim, uçtan uca testler |
 | [Ölçüm 1](docs/olcumler/01-eszamanlilik-yontemleri.md) | Dört eşzamanlılık yönteminin yük altında karşılaştırması |

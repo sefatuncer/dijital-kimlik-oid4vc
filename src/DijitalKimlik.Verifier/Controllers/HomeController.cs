@@ -1,21 +1,18 @@
 using System.Diagnostics;
 
 using DijitalKimlik.Verifier.Models;
+using DijitalKimlik.Verifier.Presentations;
 
 using Microsoft.AspNetCore.Mvc;
 
 namespace DijitalKimlik.Verifier.Controllers;
 
+/// <summary>Senaryo seçimi: hangi iş için hangi alanlar isteniyor?</summary>
 public class HomeController : Controller
 {
     public IActionResult Index()
     {
-        return View();
-    }
-
-    public IActionResult Privacy()
-    {
-        return View();
+        return View(Scenario.All);
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

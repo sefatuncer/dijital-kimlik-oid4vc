@@ -1,0 +1,62 @@
+@model RequestViewModel
+@{
+    ViewData["Title"] = Model.Transaction.Scenario.Title;
+}
+
+<h1 class="h4 mb-3">@Model.Transaction.Scenario.Title</h1>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card h-100 text-center">
+            <div class="card-body">
+                <p class="mb-2 text-secondary">Telefondaki cüzdanla okutun</p>
+                <img class="qr mb-3" src="@Model.QrDataUri" alt="OpenID4VP isteğinin QR kodu" />
+                <p class="small text-secondary mb-2">ya da bu cihazdaki cüzdanla:</p>
+                <a class="btn btn-primary" href="@Model.WalletLink" target="_blank" rel="noopener">Cüzdanla paylaş</a>
+                <p id="waiting" class="small text-secondary mt-3 mb-0">
+                    <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                    Cüzdandan yanıt bekleniyor…
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-body">
+                <p class="mb-1 fw-semibold">İstenen alanlar</p>
+                <ul class="claim-pills mb-3">
+                    @foreach (var claim in Model.Transaction.Scenario.Claims)
+                    {
+                        <li>@Scenario.LabelOf(claim)</li>
+                    }
+                </ul>
+                <p class="small text-secondary">@Model.Transaction.Scenario.Purpose</p>
+                <details>
+                    <summary class="small">İsteğin teknik ayrıntısı</summary>
+                    <dl class="tech small mt-2">
+                        <dt>nonce</dt>
+                        <dd class="font-monospace">@Model.Transaction.Nonce</dd>
+                        <dt>state</dt>
+                        <dd class="font-monospace">@Model.Transaction.State</dd>
+                        <dt>Bağlantı</dt>
+                        <dd class="font-monospace">@Model.DeepLink</dd>
+                    </dl>
+                </details>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script>
+        // Cüzdan yanıtı doğrudan sunucuya gönderir (direct_post). Bu sayfa sonucu iki saniyede bir sorar.
+        (function poll() {
+            $.getJSON('@Url.Action("Status", new { id = Model.Transaction.Id })')
+                .done(function (s) {
+                    if (s.done) { window.location = s.resultUrl; } else { setTimeout(poll, 2000); }
+                })
+                .fail(function () { $('#waiting').text('Oturumun süresi doldu. Yeni bir doğrulama başlatın.'); });
+        })();
+    </script>
+}

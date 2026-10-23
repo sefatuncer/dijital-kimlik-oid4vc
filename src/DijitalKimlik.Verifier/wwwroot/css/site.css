@@ -1,31 +1,150 @@
-html {
-  font-size: 14px;
-}
-
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+:root {
+  --verifier-primary: #3b2f6b;
+  --verifier-ok: #157347;
+  --verifier-fail: #b02a37;
 }
 
 html {
-  position: relative;
-  min-height: 100%;
+  font-size: 15px;
 }
 
 body {
-  margin-bottom: 60px;
+  background: #f6f5fa;
+  color: #1f1d2b;
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+.btn-primary {
+  background: var(--verifier-primary);
+  border-color: var(--verifier-primary);
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+.btn-primary:hover,
+.btn-primary:focus {
+  background: #2c2352;
+  border-color: #2c2352;
+}
+
+.verifier-header {
+  background: var(--verifier-primary);
+  color: #fff;
+}
+
+.verifier-brand {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  color: #fff;
+  text-decoration: none;
+}
+
+.verifier-brand small {
+  color: #cfc8ec;
+}
+
+.verifier-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--verifier-primary);
+  font-weight: 700;
+}
+
+.card {
+  border-color: #e1deec;
+}
+
+.claim-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  padding: 0;
+  list-style: none;
+}
+
+.claim-pills li {
+  background: #ece9f7;
+  color: var(--verifier-primary);
+  border-radius: 1rem;
+  padding: .15rem .65rem;
+  font-size: .85rem;
+}
+
+.qr {
+  width: 260px;
+  max-width: 100%;
+  image-rendering: pixelated;
+}
+
+.tech dt {
+  font-weight: 600;
+}
+
+.tech dd {
+  word-break: break-all;
+}
+
+.result-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-radius: .75rem;
+  padding: 1rem 1.25rem;
+  color: #fff;
+}
+
+.result-banner.ok {
+  background: var(--verifier-ok);
+}
+
+.result-banner.fail {
+  background: var(--verifier-fail);
+}
+
+.result-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.result-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.checks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.checks li {
+  display: flex;
+  gap: .75rem;
+  padding: .45rem 0;
+  border-bottom: 1px solid #eeecf4;
+}
+
+.checks li:last-child {
+  border-bottom: 0;
+}
+
+.checks .check-mark {
+  font-weight: 700;
+  width: 1.25rem;
+}
+
+.checks .pass .check-mark {
+  color: var(--verifier-ok);
+}
+
+.checks .fail .check-mark {
+  color: var(--verifier-fail);
+}
+
+.verifier-footer {
+  border-top: 1px solid #e1deec;
+  padding: 1rem 0;
+  color: #6a6680;
 }

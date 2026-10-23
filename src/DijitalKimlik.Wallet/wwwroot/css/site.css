@@ -1,31 +1,157 @@
-html {
-  font-size: 14px;
-}
-
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+:root {
+  --wallet-ink: #1d2733;
+  --wallet-bg: #e9eef2;
 }
 
 body {
-  margin-bottom: 60px;
+  background: var(--wallet-bg);
+  color: var(--wallet-ink);
+  font-size: 15px;
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+.phone {
+  max-width: 420px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background: #fff;
+  box-shadow: 0 0 24px rgba(0, 0, 0, .08);
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+.phone-bar {
+  padding: 1rem 1.25rem .75rem;
+  border-bottom: 1px solid #e3e8ec;
+}
+
+.phone-title {
+  display: block;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--wallet-ink);
+  text-decoration: none;
+}
+
+.phone-sub {
+  font-size: .8rem;
+  color: #6b7782;
+}
+
+.phone-body {
+  padding: 1.25rem;
+}
+
+.empty {
+  border: 1px dashed #c5cfd7;
+  border-radius: .75rem;
+  padding: 1rem;
+}
+
+.credential {
+  background: var(--card-bg);
+  color: var(--card-fg);
+  border-radius: 1rem;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 6px 16px rgba(11, 61, 92, .25);
+}
+
+.credential-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: .75rem;
+}
+
+.credential-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.credential-issuer {
+  font-size: .8rem;
+  opacity: .8;
+}
+
+.credential-chip {
+  font-size: .7rem;
+  border: 1px solid currentColor;
+  border-radius: 1rem;
+  padding: .1rem .5rem;
+  opacity: .85;
+}
+
+.credential-claims {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: .2rem .75rem;
+  margin: 0 0 .75rem;
+  font-size: .85rem;
+}
+
+.credential-claims dt {
+  font-weight: 400;
+  opacity: .75;
+}
+
+.credential-claims dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.credential-foot {
+  display: flex;
+  justify-content: space-between;
+  font-size: .8rem;
+  opacity: .85;
+}
+
+.credential-delete {
+  color: var(--card-fg);
+  font-size: .8rem;
+}
+
+.pin-input {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: .5rem;
+  text-align: center;
+}
+
+.btn-primary {
+  background: #0b3d5c;
+  border-color: #0b3d5c;
+}
+
+.share-box {
+  border-radius: .75rem;
+  padding: .75rem 1rem;
+}
+
+.share-yes {
+  background: #e8f5ee;
+  border: 1px solid #a9d8bc;
+}
+
+.share-no {
+  background: #f3f5f7;
+  border: 1px solid #dce2e7;
+  color: #5b6773;
+}
+
+.share-title {
+  font-weight: 700;
+  margin-bottom: .4rem;
+}
+
+.share-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: .2rem .75rem;
+  margin: 0;
+}
+
+.share-list dt {
+  font-weight: 400;
+}
+
+.share-list dd {
+  margin: 0;
+  font-weight: 600;
 }

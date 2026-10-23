@@ -1,11 +1,25 @@
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
+
 using DijitalKimlik.Application;
 using DijitalKimlik.Infrastructure;
 using DijitalKimlik.Infrastructure.Persistence;
 using DijitalKimlik.Issuer.Oid4Vci;
 
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.WebEncoders;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
+
+// Razor varsayılan olarak yalnız ASCII'yi olduğu gibi yazar; "ğ" sayfa kaynağında "&#x11F;" olur.
+// Bütün Unicode harfler serbest; <, >, & ve tırnaklar yine kodlanır (XSS koruması değişmez).
+builder.Services.Configure<WebEncoderOptions>(o => o.TextEncoderSettings = new TextEncoderSettings(UnicodeRanges.All));
+
+// Geliştirmede üç uygulama aynı makine adını (localhost) paylaşır ve çerezler portu ayırt etmez.
+// TempData çerezinin adı uygulamaya özel olmalı; yoksa biri ötekinin iletisini siler.
+builder.Services.Configure<CookieTempDataProviderOptions>(o => o.Cookie.Name = "dk-issuer-tempdata");
 builder.Services.AddApplication();
 builder.Services.AddIssuerInfrastructure(builder.Configuration);
 

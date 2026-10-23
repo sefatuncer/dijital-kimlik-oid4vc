@@ -1,0 +1,68 @@
+@model Transaction
+@{
+    ViewData["Title"] = "Sonuç";
+    var result = Model.Result!;
+}
+
+<div class="result-banner @(result.Success ? "ok" : "fail") mb-4">
+    <div class="result-icon" aria-hidden="true">@(result.Success ? "✓" : "✗")</div>
+    <div>
+        <div class="result-title">
+            @(result.Success ? "Doğrulandı" : result.Declined ? "Paylaşım reddedildi" : "Doğrulanamadı")
+        </div>
+        <div class="small">@Model.Scenario.Title</div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h6 mb-3">Doğrulama adımları</h2>
+                <ol class="checks">
+                    @foreach (var check in result.Checks)
+                    {
+                        <li class="@(check.Passed ? "pass" : "fail")">
+                            <span class="check-mark">@(check.Passed ? "✓" : "✗")</span>
+                            <div>
+                                <div class="fw-semibold">@check.Name</div>
+                                <div class="small text-secondary">@check.Detail</div>
+                            </div>
+                        </li>
+                    }
+                </ol>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h6 mb-3">Paylaşılan bilgiler</h2>
+                @if (result.Claims.Count == 0)
+                {
+                    <p class="text-secondary small mb-0">Doğrulama tamamlanmadığı için hiçbir bilgi gösterilmiyor.</p>
+                }
+                else
+                {
+                    <table class="table table-sm mb-3">
+                        <tbody>
+                            @foreach (var claim in result.Claims)
+                            {
+                                <tr>
+                                    <th class="fw-normal text-secondary">@claim.Label</th>
+                                    <td class="fw-semibold">@claim.Value</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <p class="small text-secondary mb-0">
+                        Kimlik bilgisinde açılmamış @result.HiddenDigests özet daha var (sahteler dahil). Doğrulayıcı
+                        bunların hangi alanlar olduğunu ve içeriğini göremez.
+                    </p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<a class="btn btn-outline-secondary mt-4" asp-controller="Home" asp-action="Index">Yeni doğrulama</a>

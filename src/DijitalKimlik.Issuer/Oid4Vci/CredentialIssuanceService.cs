@@ -48,8 +48,9 @@ public sealed class CredentialIssuanceService(
 
         var statusList = await db.StatusLists.OrderBy(l => l.Id).FirstAsync(cancellationToken);
 
-        // Kimlik bilgisi iznin son günü bittiğinde (UTC) geçersizleşir.
-        var expiresAt = new DateTimeOffset(permit.ValidUntil.AddDays(1).ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+        // Kimlik bilgisi iznin son gününün sonunda (23:59:59 UTC) geçersizleşir. Ertesi günün 00:00'ı
+        // seçilseydi cüzdan ve doğrulayıcı bitiş tarihini bir gün sonrası olarak gösterirdi.
+        var expiresAt = new DateTimeOffset(permit.ValidUntil.ToDateTime(new TimeOnly(23, 59, 59)), TimeSpan.Zero);
 
         // Sıra numarası rastgele seçilir; (StatusListId, StatusListIndex) benzersiz indeksi çakışmayı
         // yakalar. 20.000 kayıtta doluluk %15'tir (20.000 / 131.072); on denemenin hepsinin dolu bir

@@ -1,8 +1,49 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model IReadOnlyList<StoredCredential>
+@{
+    ViewData["Title"] = "Kimlik bilgilerim";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<h1 class="h5 mb-3">Kimlik bilgilerim</h1>
+
+@if (Model.Count == 0)
+{
+    <div class="empty">
+        <p class="mb-1">Cüzdanınız boş.</p>
+        <p class="small text-secondary mb-0">
+            Düzenleyicinin verdiği bağlantıyı açın ya da QR kodu okutun. Memurun söylediği PIN'i girince
+            kimlik bilginiz buraya gelir.
+        </p>
+    </div>
+}
+
+@foreach (var credential in Model)
+{
+    <article class="credential mb-3" style="--card-bg: @credential.BackgroundColor; --card-fg: @credential.TextColor">
+        <div class="credential-head">
+            <div>
+                <div class="credential-name">@credential.DisplayName</div>
+                <div class="credential-issuer">@credential.IssuerName</div>
+            </div>
+            <span class="credential-chip">SD-JWT VC</span>
+        </div>
+        <dl class="credential-claims">
+            @foreach (var claim in credential.Claims())
+            {
+                <dt>@claim.Label</dt>
+                <dd>@claim.Value</dd>
+            }
+        </dl>
+        <div class="credential-foot">
+            <span>Geçerlilik: @(credential.ExpiresAt?.ToString("dd.MM.yyyy") ?? "—")</span>
+            <form method="post" action="/credentials/@credential.Id/delete">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-link btn-sm p-0 credential-delete">Sil</button>
+            </form>
+        </div>
+    </article>
+}
+
+<p class="small text-secondary mt-4 mb-0">
+    Her kimlik bilgisi bu cüzdanda üretilen ayrı bir anahtara bağlıdır. Paylaşırken yalnız istenen alanlar
+    gider; geri kalanlar cüzdandan çıkmaz.
+</p>

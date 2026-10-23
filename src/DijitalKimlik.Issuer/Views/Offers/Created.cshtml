@@ -30,8 +30,13 @@
     <div class="col-lg-7">
         <div class="card h-100">
             <div class="card-body">
-                <p class="mb-1 text-secondary">Teklif bağlantısı (QR koda bu yazılır)</p>
-                <textarea class="form-control font-monospace small mb-3" rows="4" readonly>@Model.OfferUri</textarea>
+                <div class="d-flex gap-3 align-items-start mb-3">
+                    <img class="offer-qr" src="@QrCode.ToDataUri(Model.OfferUri)" alt="Teklif bağlantısının QR kodu" />
+                    <div class="flex-grow-1">
+                        <p class="mb-1 text-secondary">Teklif bağlantısı (QR kodun içeriği)</p>
+                        <textarea class="form-control font-monospace small" rows="6" readonly>@Model.OfferUri</textarea>
+                    </div>
+                </div>
                 <p class="mb-1 text-secondary">Teklifin içeriği (credential_offer)</p>
                 <pre class="offer-json">@Model.OfferJson</pre>
                 <p class="small text-secondary mb-0">

@@ -1,8 +1,35 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model IReadOnlyList<Scenario>
+@{
+    ViewData["Title"] = "Senaryolar";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<h1 class="h4 mb-1">Ne doğrulanacak?</h1>
+<p class="text-secondary mb-4">
+    Her senaryo yalnız işin gerektirdiği alanları ister. Cüzdan geri kalanları göndermez; doğrulayıcı
+    onların var olduğunu bile göremez.
+</p>
+
+<div class="row g-4">
+    @foreach (var scenario in Model)
+    {
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+                    <h2 class="h5">@scenario.Title</h2>
+                    <p class="text-secondary small">@scenario.Purpose</p>
+                    <p class="mb-1 small fw-semibold">İstenen alanlar</p>
+                    <ul class="claim-pills mb-4">
+                        @foreach (var claim in scenario.Claims)
+                        {
+                            <li>@Scenario.LabelOf(claim)</li>
+                        }
+                    </ul>
+                    <form method="post" asp-controller="Presentations" asp-action="Start" class="mt-auto">
+                        <input type="hidden" name="scenario" value="@scenario.Key" />
+                        <button type="submit" class="btn btn-primary">Doğrulamayı başlat</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
 </div>
