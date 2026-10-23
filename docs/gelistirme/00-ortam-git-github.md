@@ -107,7 +107,7 @@ Get-AuthenticodeSignature .\dotnet-install.ps1
 .\dotnet-install.ps1 -Channel 10.0 -InstallDir "$env:USERPROFILE\.dotnet" -NoPath
 ```
 
-Sonuç: `10.0.402 [C:\Users\tuncer\.dotnet\sdk]`, 770 MB. PATH değişmediği için öteki programlar
+Sonuç: `10.0.402 [%USERPROFILE%\.dotnet\sdk]`, 770 MB. PATH değişmediği için öteki programlar
 etkilenmez. Kaldırmak için klasörü silmek yeterlidir.
 
 ### 3.2 Oturum betiği
@@ -118,7 +118,7 @@ SDK'nın kullanım verisini Microsoft'a göndermesidir.
 
 ```powershell
 . .\scripts\ortam.ps1      # baştaki ". " (dot-source), betiğin bu oturumu değiştirmesini sağlar
-SDK: 10.0.402  (C:\Users\tuncer\.dotnet)
+SDK: 10.0.402  (%USERPROFILE%\.dotnet)
 ```
 
 Baştaki nokta önemlidir. Nokta olmadan betik ayrı bir kapsamda çalışır ve yaptığı PATH değişikliği

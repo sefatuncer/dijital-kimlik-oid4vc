@@ -121,10 +121,8 @@ denetlendiği bir iskelet.
 - **Dal koruması:** `main`'e yalnız "Derleme ve test" işi geçmiş commit gelebilir. Zorla push ve
   dal silme kapalı. Kural yöneticilere de uygulanır.
 
-Son CI çalışmasının özeti (GitHub Actions, 21.10.2026). İki iş paralel koşuyor; toplam süre 1 dk
-31 sn:
-
-![CI çalışma özeti: iki iş de başarılı](gorseller/ci-calisma-ozeti.png)
+Son CI çalışmasında (21.10.2026) iki iş paralel koştu: "Derleme ve test" 1 dk 24 sn,
+"Veritabanı dağıtım provası" 1 dk 21 sn. Toplam süre 1 dk 31 sn.
 
 Ayrıntı: [Not 1](gelistirme/01-iskelet-mimari-domain.md).
 
@@ -257,10 +255,8 @@ projesinde henüz kod yok.
 | Infrastructure | %97,6 | %85,7 | Entegrasyon |
 | Issuer | %67,6 | %76,5 | Entegrasyon |
 
-Bütün CI çalışmaları (23.10.2026). Faz 2'den bu yana her faz bir dalda geliştirildi, PR'da
-CI'dan geçti, sonra `main`'e alındı:
-
-![GitHub Actions çalışma geçmişi](gorseller/actions-gecmisi.png)
+Faz 2'den bu yana her faz bir dalda geliştirildi, PR'da CI'dan geçti, sonra `main`'e alındı.
+Bütün çalışmalar deponun Actions sekmesinde.
 
 ## 9. Sıradaki fazlar
 
@@ -291,18 +287,13 @@ dotnet test
 Beklenen sonuç: 69 testin hepsi geçer. Geliştirme veritabanının kurulumu
 [Not 2](gelistirme/02-veritabani-ef-core-eszamanlilik.md)'nin 2. kısmında.
 
-## 11. Bu sayfadaki görseller ve sayılar nereden geldi?
+## 11. Bu sayfadaki sayılar nereden geldi?
 
 | İçerik | Kaynak |
 |---|---|
-| CI ekran görüntüleri | GitHub'ın herkese açık Actions sayfaları, 23.10.2026. Microsoft Edge'in başsız (headless) modu ile alındı: `msedge --headless --screenshot` |
 | Test sayıları, süreler, kod kapsamı | CI çalışması #15'in `test-sonuclari` artifact'ı (TRX ve Cobertura dosyaları) |
 | Dağıtım provası çıktısı | Aynı çalışmanın "Veritabanı dağıtım provası" işinin günlüğü |
 | Ölçüm grafiği | `docs/olcumler/veri/` altındaki ham CSV dosyaları |
-
-Neden video değil? Arayüzde gösterilecek bir akış henüz yok. Ekran görüntüsü GitHub'da sayfanın
-içinde açılır, küçüktür ve aynı komutla yeniden üretilebilir. Kimlik bilgisini verme ve doğrulama
-akışı yazılınca uçtan uca akış kısa bir GIF ile gösterilecek.
 
 ## 12. Terimler
 
