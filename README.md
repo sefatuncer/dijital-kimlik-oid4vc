@@ -1,5 +1,10 @@
 # Dijital Kimlik: OpenID4VCI ve OpenID4VP ile dijital ikamet izni
 
+[![CI](https://github.com/sefatuncer/dijital-kimlik-oid4vc/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sefatuncer/dijital-kimlik-oid4vc/actions/workflows/ci.yml)
+
+**Proje nerede?** Bitmiş fazlar, test ve CI sonuçları, ölçümler ve sıradaki işler:
+[Proje turu](docs/proje-turu.md).
+
 Bu depo, .NET 10 ile yazılmış bir **referans uygulama**. Hayali bir "Demo Göç Kurumu",
 yabancılara dijital ikamet izni kimlik bilgisi (SD-JWT VC) veriyor. Yabancı bu bilgiyi web
 cüzdanında saklıyor. Doğrulayıcı kurumlar yalnız ihtiyaç duydukları alanları istiyor ve doğruluyor.
@@ -35,6 +40,7 @@ dotnet test
 
 | Klasör | İçerik |
 |---|---|
+| `docs/proje-turu.md` | Projenin aşama aşama durumu: ne bitti, nasıl doğrulandı, sırada ne var |
 | `docs/gelistirme/` | Her geliştirme adımının notu: amaç, tasarım kararları, komutlar, karşılaşılan sorunlar ve alternatifler |
 | `docs/olcumler/` | Performans ölçümleri: yöntem, ham veri, sonuçlar ve yorum |
 
